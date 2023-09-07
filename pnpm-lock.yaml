@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+dependencies:
+  lucia:
+    specifier: ^2.5.0
+    version: 2.5.0
+
 devDependencies:
   '@sveltejs/adapter-auto':
     specifier: ^2.0.0
@@ -1296,6 +1301,10 @@ packages:
     dependencies:
       yallist: 4.0.0
     dev: true
+
+  /lucia@2.5.0:
+    resolution: {integrity: sha512-eUUtf4gBsT1vLF1UEkZly3Sh620N4P0TcGzeDMviFqF0qULB7XOgC9GMmobK3y9L/cEfoD8YHNxfIN/AzSXQsg==}
+    dev: false
 
   /magic-string@0.27.0:
     resolution: {integrity: sha512-8UnnX2PeRAPZuN12svgR9j7M1uWMovg/CEnIwIG0LFkXSJJe4PdfUGiTGl8V9bsBHFUtfVINcSyYxd7q+kx9fA==}
