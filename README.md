@@ -309,15 +309,10 @@ To sign in with a **username** we need to add an `username` field to the `User` 
 
 ```ts
 model User {
-  id        String @id @unique
-  username  String @unique		<== add the username field to the User table
-  image_url String @default("")
-
+  id           String    @id @unique
+  username     String    @unique	<== add the username field to the User model
   auth_session Session[]
-  auth_key     Key[]
-  tweets       Tweet[]
-  followed_by  Follows[] @relation("following")
-  following    Follows[] @relation("follower")
+  key          Key[]
 }
 ```
 
