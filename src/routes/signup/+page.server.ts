@@ -38,12 +38,6 @@ export const actions = {
 					username
 				}
 			});
-			// const session = await auth.createSession({
-			// 	userId: user.userId,
-			// 	attributes: {}
-			// });
-			// locals.auth.setSession(session); // set session cookie
-			// console.log(`user : ` + user);
 
 			// let's return the created user back to the sign up page
 			return { user };
