@@ -383,17 +383,17 @@ Datasource "db": SQLite database "dev.db" at "file:./dev.db"
 
 SQLite database dev.db created at file:./dev.db
 
-Applying migration `20230908215445_init`
+Applying migration `20230908224702_init`
 
 The following migration(s) have been created and applied from new schema changes:
 
 migrations/
-  └─ 20230908215445_init/
+  └─ 20230908224702_init/
     └─ migration.sql
 
 Your database is now in sync with your schema.
 
-✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 108ms
+✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 114ms
 ```
 
 Congratulations, you now have your database and tables ready.

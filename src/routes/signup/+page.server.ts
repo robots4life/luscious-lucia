@@ -26,5 +26,29 @@ export const actions = {
 				message: 'Invalid password'
 			});
 		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'username', // auth method
+					providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					username
+				}
+			});
+			// const session = await auth.createSession({
+			// 	userId: user.userId,
+			// 	attributes: {}
+			// });
+			// locals.auth.setSession(session); // set session cookie
+			// console.log(`user : ` + user);
+
+			// let's return the created user back to the sign up page
+			return { user };
+		} catch (e) {
+			console.log(e);
+		}
 	}
 } satisfies Actions;
