@@ -613,3 +613,85 @@ const user = await auth.createUser({
 	}
 });
 ```
+
+The form action so far has this code. By returning the `user` after `await auth.createUser()` we can see the created user on the signup page.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import type { Actions } from './$types';
+import { fail } from '@sveltejs/kit';
+
+export const actions = {
+	default: async ({ request, locals }) => {
+		//
+		// CREATE the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+
+		// basic check
+		if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
+			// use SvelteKit's fail function to return the error
+			return fail(400, {
+				message: 'Invalid username'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'username', // auth method
+					providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					username
+				}
+			});
+
+			// let's return the created user back to the sign up page
+			return { user };
+		} catch (e) {
+			console.log(e);
+		}
+	}
+} satisfies Actions;
+```
+
+On the `signup` page we show the created `user` object from the successful user creation and return it in the default form action.
+
+**src/routes/signup/+page.svelte**
+
+```html
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	export let form;
+</script>
+
+<h1>Sign up</h1>
+<form method="post" use:enhance>
+	<label for="username">Username</label>
+	<input name="username" id="username" value="JohnSmith4000" /><br />
+	<label for="password">Password</label>
+	<input type="password" name="password" id="password" value="password123456789000" /><br />
+	<input type="submit" />
+</form>
+
+<a href="/">Home</a>
+
+{#if form}
+<code>const user = await auth.createUser</code>
+<pre>{JSON.stringify(form, null, 2)}</pre>
+{/if}
+```
