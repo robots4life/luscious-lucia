@@ -392,7 +392,7 @@ export const auth = lucia({
 export type Auth = typeof auth;
 ```
 
-### 3.0 Create a sign up page
+## 3.0 Create a sign up page
 
 To create users we need a form that sends `username` and `password` values to our database.
 
@@ -428,11 +428,11 @@ Link to the `signup` route from the `index` page.
 <a href="/signup">signup</a>
 ```
 
-### 4.0 Create users in the database
+## 4.0 Create users in the database
 
 <a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users</a>
 
-#### 4.1 Learn about SvelteKit form actions
+### 4.1 Learn about SvelteKit form actions
 
 Example from the SvelteKit docs.
 
@@ -470,7 +470,7 @@ To invoke this action from the `signup` page, just add a `<form>` - no JavaScrip
 </form>
 ```
 
-#### 4.2 Create a form action for the signup page
+### 4.2 Create a form action for the signup page
 
 **routes/signup/+page.server.ts**
 
@@ -512,4 +512,27 @@ vite dev
   ➜  press h to show help
 username : Jane
 password : icecream
+```
+
+#### 4.2.1 Do a basic check for the received form values
+
+<a href="https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors" target="_blank">https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors</a>
+
+If the request couldn't be processed because of invalid data, you can return validation errors - along with the previously submitted form values - back to the user so that they can try again. The `fail` function lets you return an HTTP status code (typically 400 or 422, in the case of validation errors) along with the data.
+
+```ts
+import { fail } from '@sveltejs/kit';
+
+// basic check
+if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
+	// use SvelteKit's fail function to return the error
+	return fail(400, {
+		message: 'Invalid username'
+	});
+}
+if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+	return fail(400, {
+		message: 'Invalid password'
+	});
+}
 ```
