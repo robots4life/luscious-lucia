@@ -288,3 +288,66 @@ export const handle: Handle = async ({ event, resolve }) => {
 	return await resolve(event);
 };
 ```
+
+## 2.0 Sign in with username and password using adapter Prisma and Sqlite
+
+<a href="https://lucia-auth.com/basics/database#database-model" target="_blank">https://lucia-auth.com/basics/database#database-model</a>
+
+Lucia requires 3 tables to work, which are then connected to Lucia via a database adapter.
+
+**User** table <a href="https://lucia-auth.com/basics/database#user-table" target="_blank">https://lucia-auth.com/basics/database#user-table</a>
+**Session** table <a href="https://lucia-auth.com/basics/database#session-table" target="_blank">https://lucia-auth.com/basics/database#session-table</a>
+**Key** table <a href="https://lucia-auth.com/basics/database#key-table" target="_blank">https://lucia-auth.com/basics/database#key-table</a>
+
+To sign in with a username we need to add a `username` field to the `User` table.
+
+**prisma/schema.prisma**
+
+```ts
+model User {
+  id        String @id @unique
+  username  String @unique		<== add the username field to the User table
+  image_url String @default("")
+
+  auth_session Session[]
+  auth_key     Key[]
+  tweets       Tweet[]
+  followed_by  Follows[] @relation("following")
+  following    Follows[] @relation("follower")
+}
+```
+
+Declare the type of each field you add in the `Lucia.DatabaseUserAttributes`
+
+**src/app.d.ts**
+
+```ts
+// See https://kit.svelte.dev/docs/types#app
+// for information about these interfaces
+
+// https://lucia-auth.com/getting-started/sveltekit#set-up-types
+declare global {
+	namespace App {
+		// interface Error {}
+		interface Locals {
+			auth: import('lucia').AuthRequest;
+		}
+		// interface PageData {}
+		// interface Platform {}
+	}
+}
+
+/// <reference types="lucia" />
+declare global {
+	namespace Lucia {
+		type Auth = import('$lib/server/lucia').Auth;
+		type DatabaseUserAttributes = {
+			// required fields (i.e. id) should not be defined here
+			username: string;		<== add the username type to the DatabaseUserAttributes type
+		};
+		type DatabaseSessionAttributes = {};
+	}
+}
+
+export {};
+```
