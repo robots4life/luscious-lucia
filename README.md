@@ -299,7 +299,11 @@ Lucia requires 3 tables to work, which are then connected to Lucia via a databas
 **Session** table <a href="https://lucia-auth.com/basics/database#session-table" target="_blank">https://lucia-auth.com/basics/database#session-table</a>
 **Key** table <a href="https://lucia-auth.com/basics/database#key-table" target="_blank">https://lucia-auth.com/basics/database#key-table</a>
 
-To sign in with a username we need to add a `username` field to the `User` table.
+### 2.1 Update your database
+
+To sign in with a **username** we need to add an `username` field to the `User` table.
+
+<a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#update-your-database" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#update-your-database</a>
 
 **prisma/schema.prisma**
 
@@ -317,7 +321,9 @@ model User {
 }
 ```
 
-Declare the type of each field you add in the `Lucia.DatabaseUserAttributes`
+### 2.2 Update your types
+
+Declare the type of each field you add in the `Lucia.DatabaseUserAttributes`.
 
 **src/app.d.ts**
 
@@ -350,4 +356,38 @@ declare global {
 }
 
 export {};
+```
+
+### 2.3 Configure Lucia
+
+We’ll expose the user’s `username` to the `User` object by defining `getUserAttributes`.
+
+<a href="https://lucia-auth.com/basics/configuration#getuserattributes" target="_blank">https://lucia-auth.com/basics/configuration#getuserattributes</a>
+
+```ts
+import { lucia } from 'lucia';
+import { sveltekit } from 'lucia/middleware';
+import { dev } from '$app/environment';
+import { prisma } from '@lucia-auth/adapter-prisma';
+import { PrismaClient } from '@prisma/client';
+
+const client = new PrismaClient();
+
+export const auth = lucia({
+	env: dev ? 'DEV' : 'PROD',
+	middleware: sveltekit(),
+	adapter: prisma(client, {
+		user: 'user', // model User {}
+		key: 'key', // model Key {}
+		session: 'session' // model Session {}
+	}),
+	// Generate user attributes for the user.
+	getUserAttributes: (data) => {
+		return {
+			username: data.username
+		};
+	}
+});
+
+export type Auth = typeof auth;
 ```
