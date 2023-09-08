@@ -358,6 +358,48 @@ declare global {
 export {};
 ```
 
+At this point, you have a Prisma schema but no database yet!!
+
+<a href="https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate" target="_blank">https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate</a>
+
+Run the following command in your terminal to create the SQLite database and the _User_, _Key_ and _Session_ tables represented by your models defined in **1.2.4 Set up Prisma schema** and updated in **2.1 Update your database**.
+
+`px prisma migrate dev --name init`
+
+This command did two things.
+
+1. It creates a new SQL migration file for this migration in the prisma/migrations directory.
+2. It runs the SQL migration file against the database.
+
+Because the SQLite database file didn't exist before, the command also created it inside the prisma directory with the name `dev.db` as defined via the environment variable in the `.env` file.
+
+```bash
+Packages: +2
+++
+Progress: resolved 2, reused 2, downloaded 0, added 2, done
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+
+SQLite database dev.db created at file:./dev.db
+
+Applying migration `20230908214956_init`
+
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20230908214956_init/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+
+✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 102ms
+```
+
+Congratulations, you now have your database and tables ready.
+
+Let's go and learn how you can send some queries to read and write data!
+
 ### 2.3 Configure Lucia
 
 We’ll expose the user’s `username` to the `User` object by defining `getUserAttributes`.
