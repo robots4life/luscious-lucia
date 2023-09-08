@@ -167,15 +167,6 @@ model User {
   key          Key[]
 }
 
-model Key {
-  id              String  @id @unique
-  hashed_password String?
-  user_id         String
-  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
-
-  @@index([user_id])
-}
-
 model Session {
   id             String @id @unique
   user_id        String
@@ -186,6 +177,14 @@ model Session {
   @@index([user_id])
 }
 
+model Key {
+  id              String  @id @unique
+  hashed_password String?
+  user_id         String
+  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
 ```
 
 #### 1.2.5 Install Lucia database adapter Prisma
