@@ -427,3 +427,89 @@ Link to the `signup` route from the `index` page.
 
 <a href="/signup">signup</a>
 ```
+
+### 4.0 Create users in the database
+
+<a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users</a>
+
+#### 4.1 Learn about SvelteKit form actions
+
+Example from the SvelteKit docs.
+
+<a href="https://kit.svelte.dev/docs/form-actions" target="_blank">https://kit.svelte.dev/docs/form-actions</a>
+
+In the simplest case, a page declares a `default action`.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from './$types';
+
+export const actions = {
+	default: async (event) => {
+		// CREATE the user with the supplied form data
+	}
+} satisfies Actions;
+```
+
+To invoke this action from the `signup` page, just add a `<form>` - no JavaScript needed.
+
+**src/routes/signup/+page.svelte**
+
+```html
+<form method="POST">
+	<label>
+		Email
+		<input name="email" type="email" />
+	</label>
+	<label>
+		Password
+		<input name="password" type="password" />
+	</label>
+	<button>Sign up</button>
+</form>
+```
+
+#### 4.2 Create a form action for the signup page
+
+**routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from './$types';
+
+export const actions = {
+	default: async ({ request, locals }) => {
+		//
+		// CREATE the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+	}
+} satisfies Actions;
+```
+
+Start the development server.
+
+`p dev`
+
+Go to the <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> page.
+
+Fill the form with `Jane` for username and `icecream` for password and click the `Submit` button.
+
+Check the terminal in VS Code. You should see the data sent to the server in the terminal.
+
+```bash
+vite dev
+
+  VITE v4.4.9  ready in 915 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+username : Jane
+password : icecream
+```
