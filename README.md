@@ -536,3 +536,38 @@ if (typeof password !== 'string' || password.length < 6 || password.length > 255
 	});
 }
 ```
+
+#### 4.2.2 Use `auth.createUser` from Lucia
+
+Users can be created with `Auth.createUser()`.
+
+<a href="https://lucia-auth.com/basics/users" target="_blank">https://lucia-auth.com/basics/users</a>
+
+This will create a new user, and, if `key` is defined, a new `key`.
+
+<a href="https://lucia-auth.com/basics/keys" target="_blank">https://lucia-auth.com/basics/keys</a>
+
+Keys represent the relationship between a user and a reference to that user. While the user id is the primary way of identifying a user, there are other ways your app may reference a user during the authentication step such as by their username, email, or Github user id.
+
+These identifiers, be it from a user input or an external source, are provided by a **provider**, identified by a `providerId`. The unique id for that user within the provider is the `providerUserId`. The unique combination of the provider id and provider user id makes up a key.
+
+The `key` here defines the connection between the user and the provided unique username (`providerUserId`) when using the username & password authentication method (`providerId`).
+
+We’ll also store the password in the `key`.
+
+This `key` will be used to get the user and validate the password when logging them in.
+
+The type for the `attributes` property is `Lucia.DatabaseUserAttributes`, to which we added username previously in **2.2 Update your types**.
+
+```ts
+const user = await auth.createUser({
+	key: {
+		providerId: 'username', // auth method
+		providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+		password // hashed by Lucia
+	},
+	attributes: {
+		username
+	}
+});
+```

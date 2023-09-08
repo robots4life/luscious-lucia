@@ -1,3 +1,4 @@
+import { auth } from '$lib/server/lucia';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 

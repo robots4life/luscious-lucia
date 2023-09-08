@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	export let form;
 </script>
 
 <h1>Sign up</h1>
@@ -12,3 +13,8 @@
 </form>
 
 <a href="/">Home</a>
+
+{#if form}
+	<code>const user = await auth.createUser</code>
+	<pre>{JSON.stringify(form, null, 2)}</pre>
+{/if}
