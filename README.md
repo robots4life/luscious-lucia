@@ -657,6 +657,7 @@ export const actions = {
 		}
 
 		try {
+			// create a new user
 			const user = await auth.createUser({
 				key: {
 					providerId: 'username', // auth method
@@ -753,3 +754,139 @@ Click on `User` to have a look at the created data.
 <img src="/docs/prisma_studio_created_user_details.png">
 
 Well done, you just created your first user with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:
+
+#### 4.2.3 Use `auth.createSession()` and `auth.setSession()` from Lucia
+
+Sessions can be created with `Auth.createSession()` and can be stored as a cookie.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth#createsession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth#createsession</a>
+
+After successfully creating a user, we’ll create a new session with `Auth.createSession()` and store it as a cookie with `AuthRequest.setSession()`.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession</a>
+
+```ts
+// create a new session once the user is created
+const session = await auth.createSession({
+	userId: user.userId,
+	attributes: {}
+});
+// store the session as a cookie on the locals object
+locals.auth.setSession(session); // set session cookie
+```
+
+The **+page.server.ts** now looks like this with the added `session` and `cookie`.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import type { Actions } from './$types';
+import { fail } from '@sveltejs/kit';
+
+export const actions = {
+	default: async ({ request, locals }) => {
+		//
+		// CREATE the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+
+		// basic check
+		if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
+			// use SvelteKit's fail function to return the error
+			return fail(400, {
+				message: 'Invalid username'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			// create a new user
+			const user = await auth.createUser({
+				key: {
+					providerId: 'username', // auth method
+					providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					username
+				}
+			});
+
+			// create a new session once the user is created
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			// store the session as a cookie on the locals object
+			locals.auth.setSession(session); // set session cookie
+
+			// let's return the created user back to the sign up page
+			return { user };
+		} catch (e) {
+			console.log(e);
+		}
+	}
+} satisfies Actions;
+```
+
+Go to your Prisma Studio on <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>, select the `User` row and hit `Delete 1 record` to delete the previously created user.
+
+<img src="/docs/prisma_studio_delete_user.png">
+
+Go to the `signup` page and now let's create a user and a session stored as a cookie for that user.
+I am using `JaneSmith8000` as username and `000987654321password` as password.
+
+<img src="/docs/create_new_user.png">
+
+Once you submit the form check your terminal, the `username` and `password` values from the form should be logged there.
+
+```bash
+> vite dev
+
+
+
+  VITE v4.4.9  ready in 890 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+username : JaneSmith8000
+password : 000987654321password
+```
+
+Again, the SvelteKit default form action returns the newly created user object to the page where we display its values.
+
+<img src="/docs/created_new_user_object.png">
+
+Go to your Prisma Studio on <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>
+and refresh the page.
+
+You should now see a new user and a new session.
+
+<img src="/docs/prisma_studio_new_created_user_and_session.png">
+
+Click on `User` to see the created user and click on `Session` to the current session for that user.
+
+The created `User`.
+
+<img src="/docs/prisma_studio_show_new_user.png">
+
+The created `Session`.
+
+<img src="/docs/prisma_studio_show_new_user_session.png">
+
+Now let's have a look at the created session cookie in the browser development tools.
+
+<img src="/docs/browser_session_cookie.png">
+
+Well done, you just created a new user and a session for that new user that is stored as a cookie, all this with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:

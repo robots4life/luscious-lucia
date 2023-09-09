@@ -28,6 +28,7 @@ export const actions = {
 		}
 
 		try {
+			// create a new user
 			const user = await auth.createUser({
 				key: {
 					providerId: 'username', // auth method
@@ -38,6 +39,14 @@ export const actions = {
 					username
 				}
 			});
+
+			// create a new session once the user is created
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			// store the session as a cookie on the locals object
+			locals.auth.setSession(session); // set session cookie
 
 			// let's return the created user back to the sign up page
 			return { user };
