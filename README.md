@@ -984,10 +984,10 @@ Invalid `prisma.user.create()` invocation:
 
 
 Unique constraint failed on the fields: (`username`)
-    at vn.handleRequestError (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6730)
-    at vn.handleAndLogRequestError (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6119)
-    at vn.request (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:5839)
-    at async l (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:128:9763) {
+    at vn.handleRequestError (/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6730)
+    at vn.handleAndLogRequestError (/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6119)
+    at vn.request (/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:5839)
+    at async l (/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:128:9763) {
   code: 'P2002',
   clientVersion: '5.2.0',
   meta: { target: [ 'username' ] }
