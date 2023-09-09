@@ -1,4 +1,4 @@
-<img src="lucia.png">
+<img src="/docs/lucia.png">
 
 I am using these aliases and oh my zsh.
 
@@ -16,7 +16,7 @@ alias px="pnpm dlx"
 
 <a href="https://lucia-auth.com/getting-started/sveltekit" target="_blank">https://lucia-auth.com/getting-started/sveltekit</a>
 
-Install Lucia using your package manager of your choice.
+Install Lucia using the package manager of your choice.
 
 `pa lucia`
 
@@ -24,7 +24,7 @@ Install Lucia using your package manager of your choice.
 
 <a href="https://lucia-auth.com/getting-started/sveltekit#initialize-lucia" target="_blank">https://lucia-auth.com/getting-started/sveltekit#initialize-lucia</a>
 
-Import lucia() from lucia and initialize it in its own module (file). Export auth and its type as Auth. Make sure to pass the sveltekit() middleware. We also need to provide an adapter but since it’ll be specific to the database you’re using, we’ll cover that in the next section.
+Import `lucia()` from `lucia` and initialize it in its own module (file). Export `auth` and its type as `Auth`. Make sure to pass the `sveltekit()` middleware. We also need to provide an adapter but since it’ll be specific to the database you’re using, we’ll cover that in the next section.
 
 **src/lib/server/lucia.ts**
 
@@ -76,7 +76,7 @@ export type Auth = typeof auth;
 
 Add the Prisma extension to VS Code.
 
-Extension Id `Prisma.prisma`
+Extension id `Prisma.prisma`
 
 <a href="https://marketplace.visualstudio.com/items?itemName=Prisma.prisma" target="_blank">https://marketplace.visualstudio.com/items?itemName=Prisma.prisma</a>
 
@@ -114,7 +114,7 @@ Done in 9.5s
 
 #### 1.2.3 Set up Prisma
 
-Set up Prisma with the init command of the Prisma CLI and choose `sqlite` as database.
+Set up Prisma with the `init` command of the Prisma CLI and choose `sqlite` as database.
 
 <a href="https://www.prisma.io/docs/reference/api-reference/command-reference#pnpm-1" target="_blank">https://www.prisma.io/docs/reference/api-reference/command-reference#pnpm-1</a>
 
@@ -356,7 +356,7 @@ At this point, you have a Prisma schema but no database yet!!
 
 <a href="https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate" target="_blank">https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate</a>
 
-Run the following command in your terminal to create the SQLite database and the _User_, _Key_ and _Session_ tables represented by your models defined in **1.2.4 Set up Prisma schema** and updated in **2.1 Update your database**.
+Run the following command in your terminal to create the SQLite database and the **User**, **Key** and **Session** tables represented by your models defined in **1.2.4 Set up Prisma schema** and updated in **2.1 Update your database**.
 
 `px prisma migrate dev --name init`
 
@@ -377,9 +377,30 @@ Datasource "db": SQLite database "dev.db" at "file:./dev.db"
 
 SQLite database dev.db created at file:./dev.db
 
-Congratulations, you now have your database and tables ready.
+Applying migration `20230909155247_init`
 
-Let's go and learn how you can send some queries to read and write data!
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20230909155247_init/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+
+✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 117ms
+```
+
+**.env**
+
+```bash
+# Environment variables declared in this file are automatically made available to Prisma.
+# See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
+
+# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
+# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+
+DATABASE_URL="file:./dev.db"
+```
 
 ### 2.3 Configure Lucia
 
@@ -541,7 +562,9 @@ password : icecream
 
 <a href="https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors" target="_blank">https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors</a>
 
-If the request couldn't be processed because of invalid data, you can return validation errors - along with the previously submitted form values - back to the user so that they can try again. The `fail` function lets you return an HTTP status code (typically 400 or 422, in the case of validation errors) along with the data.
+If the request couldn't be processed because of invalid data, you can return validation errors - along with the previously submitted form values - back to the user so that they can try again.
+
+The `fail` function lets you return an HTTP status code (typically 400 or 422, in the case of validation errors) along with the data.
 
 ```ts
 import { fail } from '@sveltejs/kit';
@@ -570,9 +593,13 @@ This will create a new user, and, if `key` is defined, a new `key`.
 
 <a href="https://lucia-auth.com/basics/keys" target="_blank">https://lucia-auth.com/basics/keys</a>
 
-Keys represent the relationship between a user and a reference to that user. While the user id is the primary way of identifying a user, there are other ways your app may reference a user during the authentication step such as by their username, email, or Github user id.
+Keys represent the relationship between a user and a reference to that user.
 
-These identifiers, be it from a user input or an external source, are provided by a **provider**, identified by a `providerId`. The unique id for that user within the provider is the `providerUserId`. The unique combination of the provider id and provider user id makes up a key.
+While the user id is the primary way of identifying a user, there are other ways your app may reference a user during the authentication step such as by their username, email, or Github user id.
+
+These identifiers, be it from a user input or an external source, are provided by a **provider**, identified by a `providerId`.
+
+The unique id for that user within the provider is the `providerUserId`. The unique combination of the provider id and provider user id makes up a key.
 
 The `key` here defines the connection between the user and the provided unique username (`providerUserId`) when using the username & password authentication method (`providerId`).
 
@@ -654,25 +681,76 @@ On the `signup` page we show the created `user` object from the successful user 
 
 **src/routes/signup/+page.svelte**
 
-```html
+```js
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	export let form;
+	export let form;	<== we can get the submitted from data back by adding the form property to the page
 </script>
 
 <h1>Sign up</h1>
 <form method="post" use:enhance>
 	<label for="username">Username</label>
-	<input name="username" id="username" value="JohnSmith4000" /><br />
+	<input name="username" id="username" /><br />
 	<label for="password">Password</label>
-	<input type="password" name="password" id="password" value="password123456789000" /><br />
+	<input type="password" name="password" id="password" /><br />
 	<input type="submit" />
 </form>
 
 <a href="/">Home</a>
 
+<!-- last not least, we check if the form property has a value and display it -->
 {#if form}
-<code>const user = await auth.createUser</code>
-<pre>{JSON.stringify(form, null, 2)}</pre>
+	<code>const user = await auth.createUser</code>
+	<pre>{JSON.stringify(form, null, 2)}</pre>
 {/if}
 ```
+
+Start Prisma Studio.
+
+<a href="https://www.prisma.io/blog/prisma-studio-3rtf78dg99fe" target="_blank">https://www.prisma.io/blog/prisma-studio-3rtf78dg99fe</a>
+
+Open <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> if it is not automatically opened in your browser after this command.
+
+`px prisma studio`
+
+<img src="/docs/prisma_studio.png">
+
+Start the development server from another terminal.
+
+`p dev`
+
+<img src="/docs/sveltekit_index.png">
+
+Go to the `signup` page.
+
+Fill is the form values and submit the form.
+
+In your terminal you should have the following output.
+
+```bash
+> vite dev
+
+
+
+  VITE v4.4.9  ready in 1053 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+username : JohnSmith4000
+password : password123456789000
+```
+
+On the `signup` page you should see the created `user` object.
+
+<img src="/docs/created_user_object.png">
+
+Have a look at Prisma Studio now and refresh the page <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>. You should see the created `user`.
+
+<img src="/docs/prisma_studio_created_user.png">
+
+Click on `User` to have a look at the created data.
+
+<img src="/docs/prisma_studio_created_user_details.png">
+
+Well done, you just created your first user with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:

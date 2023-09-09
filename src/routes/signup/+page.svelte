@@ -6,9 +6,9 @@
 <h1>Sign up</h1>
 <form method="post" use:enhance>
 	<label for="username">Username</label>
-	<input name="username" id="username" value="JohnSmith4000" /><br />
+	<input name="username" id="username" /><br />
 	<label for="password">Password</label>
-	<input type="password" name="password" id="password" value="password123456789000" /><br />
+	<input type="password" name="password" id="password" /><br />
 	<input type="submit" />
 </form>
 
