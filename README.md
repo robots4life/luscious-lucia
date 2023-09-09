@@ -377,19 +377,6 @@ Datasource "db": SQLite database "dev.db" at "file:./dev.db"
 
 SQLite database dev.db created at file:./dev.db
 
-Applying migration `20230908214956_init`
-
-The following migration(s) have been created and applied from new schema changes:
-
-migrations/
-  └─ 20230908214956_init/
-    └─ migration.sql
-
-Your database is now in sync with your schema.
-
-✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 102ms
-```
-
 Congratulations, you now have your database and tables ready.
 
 Let's go and learn how you can send some queries to read and write data!
@@ -428,7 +415,7 @@ export const auth = lucia({
 export type Auth = typeof auth;
 ```
 
-### 3.0 Create a sign up page
+## 3.0 Create a sign up page
 
 To create users we need a form that sends `username` and `password` values to our database.
 
@@ -462,4 +449,230 @@ Link to the `signup` route from the `index` page.
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 
 <a href="/signup">signup</a>
+```
+
+## 4.0 Create users in the database
+
+<a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users</a>
+
+### 4.1 Learn about SvelteKit form actions
+
+Example from the SvelteKit docs.
+
+<a href="https://kit.svelte.dev/docs/form-actions" target="_blank">https://kit.svelte.dev/docs/form-actions</a>
+
+In the simplest case, a page declares a `default action`.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from './$types';
+
+export const actions = {
+	default: async (event) => {
+		// CREATE the user with the supplied form data
+	}
+} satisfies Actions;
+```
+
+To invoke this action from the `signup` page, just add a `<form>` - no JavaScript needed.
+
+**src/routes/signup/+page.svelte**
+
+```html
+<form method="POST">
+	<label>
+		Email
+		<input name="email" type="email" />
+	</label>
+	<label>
+		Password
+		<input name="password" type="password" />
+	</label>
+	<button>Sign up</button>
+</form>
+```
+
+### 4.2 Create a form action for the signup page
+
+**routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from './$types';
+
+export const actions = {
+	default: async ({ request, locals }) => {
+		//
+		// CREATE the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+	}
+} satisfies Actions;
+```
+
+Start the development server.
+
+`p dev`
+
+Go to the <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> page.
+
+Fill the form with `Jane` for username and `icecream` for password and click the `Submit` button.
+
+Check the terminal in VS Code. You should see the data sent to the server in the terminal.
+
+```bash
+vite dev
+
+  VITE v4.4.9  ready in 915 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+username : Jane
+password : icecream
+```
+
+#### 4.2.1 Do a basic check for the received form values
+
+<a href="https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors" target="_blank">https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors</a>
+
+If the request couldn't be processed because of invalid data, you can return validation errors - along with the previously submitted form values - back to the user so that they can try again. The `fail` function lets you return an HTTP status code (typically 400 or 422, in the case of validation errors) along with the data.
+
+```ts
+import { fail } from '@sveltejs/kit';
+
+// basic check
+if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
+	// use SvelteKit's fail function to return the error
+	return fail(400, {
+		message: 'Invalid username'
+	});
+}
+if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+	return fail(400, {
+		message: 'Invalid password'
+	});
+}
+```
+
+#### 4.2.2 Use `auth.createUser` from Lucia
+
+Users can be created with `Auth.createUser()`.
+
+<a href="https://lucia-auth.com/basics/users" target="_blank">https://lucia-auth.com/basics/users</a>
+
+This will create a new user, and, if `key` is defined, a new `key`.
+
+<a href="https://lucia-auth.com/basics/keys" target="_blank">https://lucia-auth.com/basics/keys</a>
+
+Keys represent the relationship between a user and a reference to that user. While the user id is the primary way of identifying a user, there are other ways your app may reference a user during the authentication step such as by their username, email, or Github user id.
+
+These identifiers, be it from a user input or an external source, are provided by a **provider**, identified by a `providerId`. The unique id for that user within the provider is the `providerUserId`. The unique combination of the provider id and provider user id makes up a key.
+
+The `key` here defines the connection between the user and the provided unique username (`providerUserId`) when using the username & password authentication method (`providerId`).
+
+We’ll also store the password in the `key`.
+
+This `key` will be used to get the user and validate the password when logging them in.
+
+The type for the `attributes` property is `Lucia.DatabaseUserAttributes`, to which we added username previously in **2.2 Update your types**.
+
+```ts
+const user = await auth.createUser({
+	key: {
+		providerId: 'username', // auth method
+		providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+		password // hashed by Lucia
+	},
+	attributes: {
+		username
+	}
+});
+```
+
+The form action so far has this code. By returning the `user` after `await auth.createUser()` we can see the created user on the signup page.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import type { Actions } from './$types';
+import { fail } from '@sveltejs/kit';
+
+export const actions = {
+	default: async ({ request, locals }) => {
+		//
+		// CREATE the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+
+		// basic check
+		if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
+			// use SvelteKit's fail function to return the error
+			return fail(400, {
+				message: 'Invalid username'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'username', // auth method
+					providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					username
+				}
+			});
+
+			// let's return the created user back to the sign up page
+			return { user };
+		} catch (e) {
+			console.log(e);
+		}
+	}
+} satisfies Actions;
+```
+
+On the `signup` page we show the created `user` object from the successful user creation and return it in the default form action.
+
+**src/routes/signup/+page.svelte**
+
+```html
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	export let form;
+</script>
+
+<h1>Sign up</h1>
+<form method="post" use:enhance>
+	<label for="username">Username</label>
+	<input name="username" id="username" value="JohnSmith4000" /><br />
+	<label for="password">Password</label>
+	<input type="password" name="password" id="password" value="password123456789000" /><br />
+	<input type="submit" />
+</form>
+
+<a href="/">Home</a>
+
+{#if form}
+<code>const user = await auth.createUser</code>
+<pre>{JSON.stringify(form, null, 2)}</pre>
+{/if}
 ```
