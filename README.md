@@ -932,6 +932,9 @@ try {
 			console.log('e : ' + e);
 			console.log('e.meta : ' + e?.meta);
 			console.log('e.meta.target : ' + e?.meta?.target);
+
+			// return the error to the page with SvelteKit's fail function
+			return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
 		}
 	}
 	// Lucia error
@@ -996,6 +999,20 @@ Unique constraint failed on the fields: (`username`)
 
 If you like to show the error on the page you can return it from the catch block.
 
+The `fail` function is used as part of a SvelteKit form action, it handles validation errors.
+
+<a href="https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors" target="_blank">https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors</a>
+
+If the request couldn't be processed because of invalid data, you can return validation errors — along with the previously submitted form values - back to the user so that they can try again.
+
+The fail function lets you return an HTTP status code (typically `400` or `422`, in the case of validation errors) along with the data.
+
+<a href="https://stackoverflow.com/a/76038549" target="_blank">https://stackoverflow.com/a/76038549</a>
+
+Instead of just throwing the error you can redirect the user to another page.
+
+<a href="https://kit.svelte.dev/docs/load#redirects" target="_blank">https://kit.svelte.dev/docs/load#redirects</a>
+
 ```ts
 try {
 	// ...
@@ -1014,8 +1031,9 @@ try {
 			console.log('e.meta : ' + e?.meta);
 			console.log('e.meta.target : ' + e?.meta?.target);
 
-			// return the error to the page
-			return { error: `Unique constraint failed on the ${e?.meta?.target}` };
+			// return the error to the page with SvelteKit's fail function
+			// https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors
+			return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
 		}
 	}
 	// Lucia error
@@ -1023,23 +1041,24 @@ try {
 	if (e instanceof LuciaError) {
 		// Lucia error
 		console.log(e);
+		return fail(500, { message: e });
 	}
-	// throw error;
-	throw e;
+	// throw a SvelteKit redirect
+	// https://kit.svelte.dev/docs/load#redirects
+	// make sure you don't throw inside a try/catch block!
+	throw redirect(302, '/');
 }
 ```
 
 On the `signup` page we show the created error object that is returned in the catch block of the default form action.
 
-The error object is returned as part of the page `data` property for the `signup` page so we use that to show the error object.
+The error object is returned as part of the page `form` property for the `signup` page.
 
 **src/routes/signup/+page.svelte**
 
 ```js
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { PageData } from './$types.js';
-	export let data: PageData;
 	export let form;
 </script>
 
@@ -1054,9 +1073,6 @@ The error object is returned as part of the page `data` property for the `signup
 
 <a href="/">Home</a>
 
-<!-- display the error object returned in the catch block of the default form action -->
-<pre>{JSON.stringify(data, null, 2)}</pre>
-
 {#if form}
 	<pre>{JSON.stringify(form, null, 2)}</pre>
 {/if}
@@ -1070,7 +1086,7 @@ The **+page.server.ts** now looks like this with the added `error` handling.
 import { auth } from '$lib/server/lucia';
 import { LuciaError } from 'lucia';
 import type { Actions } from './$types';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { Prisma } from '@prisma/client';
 
 export const actions = {
@@ -1136,8 +1152,9 @@ export const actions = {
 					console.log('e.meta : ' + e?.meta);
 					console.log('e.meta.target : ' + e?.meta?.target);
 
-					// return the error to the page
-					return { error: `Unique constraint failed on the ${e?.meta?.target}` };
+					// return the error to the page with SvelteKit's fail function
+					// https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors
+					return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
 				}
 			}
 			// Lucia error
@@ -1145,9 +1162,12 @@ export const actions = {
 			if (e instanceof LuciaError) {
 				// Lucia error
 				console.log(e);
+				return fail(500, { message: e });
 			}
-			// throw error;
-			throw e;
+			// throw a SvelteKit redirect
+			// https://kit.svelte.dev/docs/load#redirects
+			// make sure you don't throw inside a try/catch block!
+			throw redirect(302, '/');
 		}
 	}
 } satisfies Actions;
@@ -1159,5 +1179,6 @@ Well done, you
 - and a session for that new user
 - that is stored as a cookie
 - and you are handling errors with Lucia and Prisma
+- and finally you are redirecting the user to another page if none of the error conditions apply
 
 all this with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:

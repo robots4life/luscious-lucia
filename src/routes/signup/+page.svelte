@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { PageData } from './$types.js';
-	export let data: PageData;
 	export let form;
 </script>
 
@@ -15,8 +13,6 @@
 </form>
 
 <a href="/">Home</a>
-
-<pre>{JSON.stringify(data, null, 2)}</pre>
 
 {#if form}
 	<pre>{JSON.stringify(form, null, 2)}</pre>

@@ -1,7 +1,7 @@
 import { auth } from '$lib/server/lucia';
 import { LuciaError } from 'lucia';
 import type { Actions } from './$types';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { Prisma } from '@prisma/client';
 
 export const actions = {
@@ -67,8 +67,9 @@ export const actions = {
 					console.log('e.meta : ' + e?.meta);
 					console.log('e.meta.target : ' + e?.meta?.target);
 
-					// return the error to the page
-					return { error: `Unique constraint failed on the ${e?.meta?.target}` };
+					// return the error to the page with SvelteKit's fail function
+					// https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors
+					return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
 				}
 			}
 			// Lucia error
@@ -76,9 +77,12 @@ export const actions = {
 			if (e instanceof LuciaError) {
 				// Lucia error
 				console.log(e);
+				return fail(500, { message: e });
 			}
-			// throw error;
-			throw e;
+			// throw a SvelteKit redirect
+			// https://kit.svelte.dev/docs/load#redirects
+			// make sure you don't throw inside a try/catch block!
+			throw redirect(302, '/');
 		}
 	}
 } satisfies Actions;
