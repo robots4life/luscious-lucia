@@ -15,6 +15,5 @@
 <a href="/">Home</a>
 
 {#if form}
-	<code>const user = await auth.createUser</code>
 	<pre>{JSON.stringify(form, null, 2)}</pre>
 {/if}

@@ -700,7 +700,6 @@ On the `signup` page we show the created `user` object from the successful user 
 
 <!-- last not least, we check if the form property has a value and display it -->
 {#if form}
-	<code>const user = await auth.createUser</code>
 	<pre>{JSON.stringify(form, null, 2)}</pre>
 {/if}
 ```
@@ -723,7 +722,7 @@ Start the development server from another terminal.
 
 Go to the `signup` page.
 
-Fill is the form values and submit the form.
+Fill in the form values and submit the form.
 
 In your terminal you should have the following output.
 
