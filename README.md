@@ -167,15 +167,6 @@ model User {
   key          Key[]
 }
 
-model Key {
-  id              String  @id @unique
-  hashed_password String?
-  user_id         String
-  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
-
-  @@index([user_id])
-}
-
 model Session {
   id             String @id @unique
   user_id        String
@@ -186,6 +177,14 @@ model Session {
   @@index([user_id])
 }
 
+model Key {
+  id              String  @id @unique
+  hashed_password String?
+  user_id         String
+  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
 ```
 
 #### 1.2.5 Install Lucia database adapter Prisma
@@ -309,15 +308,10 @@ To sign in with a **username** we need to add an `username` field to the `User` 
 
 ```ts
 model User {
-  id        String @id @unique
-  username  String @unique		<== add the username field to the User table
-  image_url String @default("")
-
+  id           String    @id @unique
+  username     String    @unique	<== add the username field to the User model
   auth_session Session[]
-  auth_key     Key[]
-  tweets       Tweet[]
-  followed_by  Follows[] @relation("following")
-  following    Follows[] @relation("follower")
+  key          Key[]
 }
 ```
 
@@ -382,19 +376,6 @@ Prisma schema loaded from prisma/schema.prisma
 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
 
 SQLite database dev.db created at file:./dev.db
-
-Applying migration `20230908224702_init`
-
-The following migration(s) have been created and applied from new schema changes:
-
-migrations/
-  └─ 20230908224702_init/
-    └─ migration.sql
-
-Your database is now in sync with your schema.
-
-✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 114ms
-```
 
 Congratulations, you now have your database and tables ready.
 
