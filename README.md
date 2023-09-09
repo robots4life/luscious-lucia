@@ -890,3 +890,265 @@ Now let's have a look at the created session cookie in the browser development t
 <img src="/docs/browser_session_cookie.png">
 
 Well done, you just created a new user and a session for that new user that is stored as a cookie, all this with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:
+
+#### 4.2.4 Handle errors
+
+Lucia throws 2 types of errors: `LuciaError` and database errors from the database driver or ORM you’re using.
+
+<a href="https://lucia-auth.com/reference/lucia/modules/main#luciaerror" target="_blank">https://lucia-auth.com/reference/lucia/modules/main#luciaerror</a>
+
+Most database related errors, such as connection failure, duplicate values, and foreign key constraint errors, are thrown as is. These need to be handled as if you were using just the driver/ORM.
+
+Find details about how Prisma does error handling.
+
+<a href="https://www.prisma.io/docs/concepts/components/prisma-client/handling-exceptions-and-errors" target="_blank">https://www.prisma.io/docs/concepts/components/prisma-client/handling-exceptions-and-errors</a>
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference</a>
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes</a>
+
+<a href="https://www.prisma.io/docs/concepts/components/prisma-client/working-with-prismaclient/error-formatting" target="_blank">https://www.prisma.io/docs/concepts/components/prisma-client/working-with-prismaclient/error-formatting</a>
+
+Let's try and log a `PrismaClientKnownRequestError` with Prisma.
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror</a>
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference#p2002" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference#p2002</a>
+
+```ts
+try {
+	// ...
+} catch (e) {
+	//
+	// Prisma error
+	// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+	if (e instanceof Prisma.PrismaClientKnownRequestError) {
+		//
+		// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+		// The .code property can be accessed in a type-safe manner
+		if (e.code === 'P2002') {
+			console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+			console.log('\n');
+			console.log('e : ' + e);
+			console.log('e.meta : ' + e?.meta);
+			console.log('e.meta.target : ' + e?.meta?.target);
+		}
+	}
+	// Lucia error
+	// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+	if (e instanceof LuciaError) {
+		// Lucia error
+		console.log(e);
+	}
+	// throw error;
+	throw e;
+}
+```
+
+Let's have a look at such an error.
+
+We just created a new user `JaneSmith8000` in **4.2.3 Use `auth.createSession()` and `auth.setSession()` from Lucia**.
+
+Now we know from our Prisma schema that the field `username` in the `User` model has to be `unique`.
+
+```prisma
+model User {
+  id           String    @id @unique
+  username     String    @unique	<= username HAS to be unique
+  auth_session Session[]
+  key          Key[]
+}
+```
+
+So if we try to create another new user with the same username `JaneSmith8000` we should get an error since a user with that username already exists in the database.
+
+Let's have a look at the error.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit a new user with username `JaneSmith8000` and check your terminal.
+
+```bash
+username : JaneSmith8000
+password : 65465465465465465464
+Unique constraint failed on the username
+
+
+e : PrismaClientKnownRequestError:
+Invalid `prisma.user.create()` invocation:
+
+
+Unique constraint failed on the fields: (`username`)
+e.meta : [object Object]
+e.meta.target : username
+PrismaClientKnownRequestError:
+Invalid `prisma.user.create()` invocation:
+
+
+Unique constraint failed on the fields: (`username`)
+    at vn.handleRequestError (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6730)
+    at vn.handleAndLogRequestError (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6119)
+    at vn.request (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:5839)
+    at async l (/media/user/d/WWW/luscious-lucia/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:128:9763) {
+  code: 'P2002',
+  clientVersion: '5.2.0',
+  meta: { target: [ 'username' ] }
+}
+```
+
+If you like to show the error on the page you can return it from the catch block.
+
+```ts
+try {
+	// ...
+} catch (e) {
+	//
+	// Prisma error
+	// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+	if (e instanceof Prisma.PrismaClientKnownRequestError) {
+		//
+		// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+		// The .code property can be accessed in a type-safe manner
+		if (e.code === 'P2002') {
+			console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+			console.log('\n');
+			console.log('e : ' + e);
+			console.log('e.meta : ' + e?.meta);
+			console.log('e.meta.target : ' + e?.meta?.target);
+
+			// return the error to the page
+			return { error: `Unique constraint failed on the ${e?.meta?.target}` };
+		}
+	}
+	// Lucia error
+	// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+	if (e instanceof LuciaError) {
+		// Lucia error
+		console.log(e);
+	}
+	// throw error;
+	throw e;
+}
+```
+
+On the `signup` page we show the created error object that is returned in the catch block of the default form action.
+
+The error object is returned as part of the page `data` property for the `signup` page so we use that to show the error object.
+
+**src/routes/signup/+page.svelte**
+
+```js
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import type { PageData } from './$types.js';
+	export let data: PageData;
+	export let form;
+</script>
+
+<h1>Sign up</h1>
+<form method="post" use:enhance>
+	<label for="username">Username</label>
+	<input name="username" id="username" /><br />
+	<label for="password">Password</label>
+	<input type="password" name="password" id="password" /><br />
+	<input type="submit" />
+</form>
+
+<a href="/">Home</a>
+
+<!-- display the error object returned in the catch block of the default form action -->
+<pre>{JSON.stringify(data, null, 2)}</pre>
+
+{#if form}
+	<pre>{JSON.stringify(form, null, 2)}</pre>
+{/if}
+```
+
+The **+page.server.ts** now looks like this with the added `error` handling.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import { LuciaError } from 'lucia';
+import type { Actions } from './$types';
+import { fail } from '@sveltejs/kit';
+import { Prisma } from '@prisma/client';
+
+export const actions = {
+	default: async ({ request, locals }) => {
+		//
+		// CREATE the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+
+		// basic check
+		if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
+			// use SvelteKit's fail function to return the error
+			return fail(400, {
+				message: 'Invalid username'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			// create a new user
+			const user = await auth.createUser({
+				key: {
+					providerId: 'username', // auth method
+					providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					username
+				}
+			});
+
+			// create a new session once the user is created
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			// store the session as a cookie on the locals object
+			locals.auth.setSession(session); // set session cookie
+
+			// let's return the created user back to the sign up page
+			return { user };
+		} catch (e) {
+			//
+			// Prisma error
+			// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+			if (e instanceof Prisma.PrismaClientKnownRequestError) {
+				//
+				// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+				// The .code property can be accessed in a type-safe manner
+				if (e.code === 'P2002') {
+					console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+					console.log('\n');
+					console.log('e : ' + e);
+					console.log('e.meta : ' + e?.meta);
+					console.log('e.meta.target : ' + e?.meta?.target);
+
+					// return the error to the page
+					return { error: `Unique constraint failed on the ${e?.meta?.target}` };
+				}
+			}
+			// Lucia error
+			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+			if (e instanceof LuciaError) {
+				// Lucia error
+				console.log(e);
+			}
+			// throw error;
+			throw e;
+		}
+	}
+} satisfies Actions;
+```
