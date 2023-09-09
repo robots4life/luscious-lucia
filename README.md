@@ -356,7 +356,7 @@ At this point, you have a Prisma schema but no database yet!!
 
 <a href="https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate" target="_blank">https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate</a>
 
-Run the following command in your terminal to create the SQLite database and the **User**, **Key** and **Session** tables represented by your models defined in **1.2.4 Set up Prisma schema** and updated in **2.1 Update your database**.
+Run the following command in your terminal to create the SQLite database and the **User**, **Key** and **Session** tables represented by your models defined in <a href="https://github.com/robots4life/luscious-lucia#124-set-up-prisma-schema" target="_blank">**1.2.4 Set up Prisma schema**</a> and updated in <a href="https://github.com/robots4life/luscious-lucia#21-update-your-database" target="_blank">**2.1 Update your database**</a>.
 
 `px prisma migrate dev --name init`
 
@@ -607,7 +607,7 @@ We’ll also store the password in the `key`.
 
 This `key` will be used to get the user and validate the password when logging them in.
 
-The type for the `attributes` property is `Lucia.DatabaseUserAttributes`, to which we added username previously in **2.2 Update your types**.
+The type for the `attributes` property is `Lucia.DatabaseUserAttributes`, to which we added username previously in <a href="https://github.com/robots4life/luscious-lucia#22-update-your-types" target="_blank">**2.2 Update your types**</a>.
 
 ```ts
 const user = await auth.createUser({
@@ -947,7 +947,7 @@ try {
 
 Let's have a look at such an error.
 
-We just created a new user `JaneSmith8000` in **4.2.3 Use `auth.createSession()` and `auth.setSession()` from Lucia**.
+We just created a new user `JaneSmith8000` in <a href="https://github.com/robots4life/luscious-lucia#423-use-authcreatesession-and-authsetsession-from-lucia" target="_blank">**4.2.3 Use `auth.createSession()` and `auth.setSession()` from Lucia**</a>.
 
 Now we know from our Prisma schema that the field `username` in the `User` model has to be `unique`.
 
@@ -1152,3 +1152,12 @@ export const actions = {
 	}
 } satisfies Actions;
 ```
+
+Well done, you
+
+- just created a new user
+- and a session for that new user
+- that is stored as a cookie
+- and you are handling errors with Lucia and Prisma
+
+all this with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:
