@@ -308,15 +308,10 @@ To sign in with a **username** we need to add an `username` field to the `User` 
 
 ```ts
 model User {
-  id        String @id @unique
-  username  String @unique		<== add the username field to the User table
-  image_url String @default("")
-
+  id           String    @id @unique
+  username     String    @unique	<== add the username field to the User model
   auth_session Session[]
-  auth_key     Key[]
-  tweets       Tweet[]
-  followed_by  Follows[] @relation("following")
-  following    Follows[] @relation("follower")
+  key          Key[]
 }
 ```
 
@@ -431,4 +426,40 @@ export const auth = lucia({
 });
 
 export type Auth = typeof auth;
+```
+
+### 3.0 Create a sign up page
+
+To create users we need a form that sends `username` and `password` values to our database.
+
+Create a `signup` route.
+
+**src/routes/signup/+page.svelte**
+
+```html
+<script lang="ts">
+	import { enhance } from '$app/forms';
+</script>
+
+<h1>Sign up</h1>
+<form method="post" use:enhance>
+	<label for="username">Username</label>
+	<input name="username" id="username" /><br />
+	<label for="password">Password</label>
+	<input type="password" name="password" id="password" /><br />
+	<input type="submit" />
+</form>
+
+<a href="/">Home</a>
+```
+
+Link to the `signup` route from the `index` page.
+
+**src/routes/+page.svelte**
+
+```html
+<h1>Welcome to SvelteKit</h1>
+<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+
+<a href="/signup">signup</a>
 ```
