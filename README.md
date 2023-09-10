@@ -471,7 +471,7 @@ Link to the `signup` route from the `index` page.
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 
-<a href="/signup">signup</a>
+<a href="/signup">Signup</a>
 ```
 
 ## 4.0 Create users in the database
