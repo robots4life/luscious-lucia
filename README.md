@@ -1,6 +1,8 @@
 <img src="/docs/lucia.png">
 
-I am using these aliases and oh my zsh.
+I am using `pnpm` and these aliases and oh my zsh.
+
+<a href="https://pnpm.io/" target="_blank">https://pnpm.io/</a>
 
 <a href="https://ohmyz.sh/" target="_blank">https://ohmyz.sh/</a>
 
@@ -775,7 +777,7 @@ const session = await auth.createSession({
 locals.auth.setSession(session); // set session cookie
 ```
 
-The **+page.server.ts** now looks like this with the added `session` and `cookie`.
+The **+page.server.ts** file now looks like this with the added `session` and `cookie`.
 
 **src/routes/signup/+page.server.ts**
 
@@ -1003,15 +1005,19 @@ The `fail` function is used as part of a SvelteKit form action, it handles valid
 
 <a href="https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors" target="_blank">https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors</a>
 
-If the request couldn't be processed because of invalid data, you can return validation errors — along with the previously submitted form values - back to the user so that they can try again.
+If the request couldn't be processed because of invalid data, you can return validation errors - along with the previously submitted form values - back to the user so that they can try again.
 
-The fail function lets you return an HTTP status code (typically `400` or `422`, in the case of validation errors) along with the data.
+The `fail` function lets you return an HTTP status code (typically `400` or `422`, in the case of validation errors) along with the data.
 
+What are the differences between throwing an error and returning `fail` in SvelteKit?
 <a href="https://stackoverflow.com/a/76038549" target="_blank">https://stackoverflow.com/a/76038549</a>
 
-Instead of just throwing the error you can redirect the user to another page.
+Instead of throwing the error you can redirect the user to another page if none of the error conditions you are checking for apply.
 
 <a href="https://kit.svelte.dev/docs/load#redirects" target="_blank">https://kit.svelte.dev/docs/load#redirects</a>
+
+For checking for all possible errors listed in the Prisma reference read this info.
+<a href="https://github.com/prisma/prisma/issues/9082" target="_blank">https://github.com/prisma/prisma/issues/9082</a>
 
 ```ts
 try {
@@ -1050,7 +1056,7 @@ try {
 }
 ```
 
-On the `signup` page we show the created error object that is returned in the catch block of the default form action.
+On the `signup` page we show the created error object that is returned with the `fail` function in the catch block of the default form action.
 
 The error object is returned as part of the page `form` property for the `signup` page.
 
@@ -1078,7 +1084,7 @@ The error object is returned as part of the page `form` property for the `signup
 {/if}
 ```
 
-The **+page.server.ts** now looks like this with the added `error` handling.
+The **+page.server.ts** file now looks like this with the added `error` handling.
 
 **src/routes/signup/+page.server.ts**
 
@@ -1182,3 +1188,32 @@ Well done, you
 - and finally you are redirecting the user to another page if none of the error conditions apply
 
 all this with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:
+
+#### 4.2.5 Handle case sensitive user input
+
+Depending on your database, `user123` and `USER123` may be treated as different strings.
+
+To avoid 2 users having the same `username` with different cases, we are going to make the `username` lowercase before creating a key.
+
+This is crucial when setting a user-provided input as a provider user id of a key.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+// create a new user
+const user = await auth.createUser({
+	key: {
+		providerId: 'username', // auth method
+		// make the user input for username all lowercase
+		providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+		password // hashed by Lucia
+	},
+	attributes: {
+		username
+	}
+});
+```
+
+On the other hand, making the `username` stored as a user attribute lowercase is optional
+
+However, if you need to query users using usernames (e.g. url `/user/user123`), it may be beneficial to require the username to be lowercase, store 2 usernames (lowercase and normal), or set the database to ignore casing when compare strings (e.g. using LOWER() in SQL).
