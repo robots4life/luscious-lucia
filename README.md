@@ -1214,6 +1214,138 @@ const user = await auth.createUser({
 });
 ```
 
-On the other hand, making the `username` stored as a user attribute lowercase is optional
+On the other hand, making the `username` stored as a user attribute lowercase is optional.
 
 However, if you need to query users using usernames (e.g. url `/user/user123`), it may be beneficial to require the username to be lowercase, store 2 usernames (lowercase and normal), or set the database to ignore casing when compare strings (e.g. using LOWER() in SQL).
+
+## 5.0 Redirect authenticated users
+
+After a new user has successfully registered a new `username` on the `signup` page it makes sense to `redirect` that user to another page of the app instead of staying on the `signup` page.
+
+For example we could redirect the new user to their personal `profile` page. Also, if a user tries to go back to the `signup` page we should redirect them to their `profile` page instead.
+
+<a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#redirect-authenticated-users" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#redirect-authenticated-users</a>
+
+In the previous step we did create a new user and a session for that user stored in a cookie. We will use the session stored in that cookie to authenticate the user on every new request to the app.
+
+You can validate requests by creating a new `AuthRequest` instance with `Auth.handleRequest()`, which is stored in `locals.auth ` and calling `AuthRequest.validate()`.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/authrequest" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/authrequest</a>
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth#handlerequest" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth#handlerequest</a>
+
+In <a href="https://github.com/robots4life/luscious-lucia#423-use-authcreatesession-and-authsetsession-from-lucia" target="_blank">4.2.3 Use auth.createSession() and auth.setSession() from Lucia</a> we did create a new session for the newly created user and set a session cookie for them on the `local` object under the `auth` property.
+
+This is where the session is set in the created cookie.
+
+```ts
+// create a new session once the user is created
+const session = await auth.createSession({
+	userId: user.userId,
+	attributes: {}
+});
+// store the session as a cookie on the locals object
+locals.auth.setSession(session); // set session cookie
+```
+
+Since we are on the `signup` page and submit a form the page reloads per web standards.
+
+<a href="https://developer.mozilla.org/en-US/docs/Learn/Forms/Sending_and_retrieving_form_data" target="_blank">https://developer.mozilla.org/en-US/docs/Learn/Forms/Sending_and_retrieving_form_data</a>
+
+So once the page reloads and while we still have the session cookie stored in the app we can define a SvelteKit `load` function that has access to the `locals` object. Remember, on this `locals` object we added the `auth` property with this code.
+
+```ts
+locals.auth.setSession(session); // set session cookie
+```
+
+The `locals` object can be accessed in hooks, handle, and handleError, server-only load functions, and +server.js files.
+
+It is important to understand that this `locals` object can be accessed by the mentioned functions, all of them being executed in a server-side context.
+
+<a href="https://kit.svelte.dev/docs/types#app-locals" target="_blank">https://kit.svelte.dev/docs/types#app-locals</a>
+
+<a href="https://kit.svelte.dev/docs/hooks#server-hooks-handle" target="_blank">https://kit.svelte.dev/docs/hooks#server-hooks-handle</a>
+
+Let's define a `load` function on the `signup` page and call the `validate` method on the `auth` property of the `locals` object.
+
+The `validate` method returns a `Session` if the user is authenticated or `null` if not.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate</a>
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces#session" target="_blank">https://ucia-auth.com/reference/lucia/interfaces#session</a>
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	// call the validate() method to check for a valid session
+	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
+	const session = await locals.auth.validate();
+	//
+	if (session) {
+		// we redirect the user to the profile page if the session is valid
+		throw redirect(302, '/profile');
+	}
+	// since the load function needs to return data to the page we return an empty object
+	return {};
+};
+```
+
+### 5.1 Create a profile page
+
+Create a `+page.svelte` file in `src/routes/profile`. We use the page `data` property to display the loaded data for that page.
+
+**src/routes/profile/+page.svelte**
+
+```js
+<script lang="ts">
+	import type { PageData } from './$types';
+	export let data: PageData;
+</script>
+
+{#if Object.keys(data).length !== 0}
+	<pre>{JSON.stringify(data, null, 2)}</pre>
+{/if}
+```
+
+Create a `+page.server.ts` file in `src/routes/profile`. We use the `load` function to load data for the profile page.
+
+**src/routes/profile/+page.server.ts**
+
+```ts
+// routes/+page.server.ts
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	// call the validate() method to check for a valid session
+	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
+	const session = await locals.auth.validate();
+	if (!session) {
+		// if the session is not valid we redirect the user back to the signup page
+		throw redirect(302, '/signup');
+	}
+	// if the user session is validated we return the user data to the profile page
+	return {
+		userId: session.user.userId,
+		username: session.user.username
+	};
+};
+```
+
+The `user` object is available in `Session.user`, and you’ll see that `User.username` exists because we defined it in <a href="https://github.com/robots4life/luscious-lucia#23-configure-lucia" target="_blank">2.3 Configure Lucia</a> with the `getUserAttributes()` configuration.
+
+```ts
+// Generate user attributes for the user.
+getUserAttributes: (data) => {
+	return {
+		username: data.username
+	};
+};
+```
+
+On the `profile` page <a href="http://localhost:5173/profile" target="_blank">http://localhost:5173/profile</a> we can now display the user data.
+
+<img src="/docs/profile_page_show_user_data.png">

@@ -4,6 +4,21 @@ import type { Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { Prisma } from '@prisma/client';
 
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	// call the validate() method to check for a valid session
+	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
+	const session = await locals.auth.validate();
+	//
+	if (session) {
+		// we redirect the user to the profile page if the session is valid
+		throw redirect(302, '/profile');
+	}
+	// since the load function needs to return data to the page we return an empty object
+	return {};
+};
+
 export const actions = {
 	default: async ({ request, locals }) => {
 		//
