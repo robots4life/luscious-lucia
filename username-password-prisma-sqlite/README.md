@@ -1857,7 +1857,7 @@ export const actions: Actions = {
 		// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 		locals.auth.setSession(null); // remove cookie
 
-		throw redirect(302, '/'); // redirect to index page
+		throw redirect(302, '/'); // redirect to the index page
 	}
 };
 ```
