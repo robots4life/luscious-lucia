@@ -16,6 +16,8 @@ alias px="pnpm dlx"
 
 ## 1.0 Getting Started in SvelteKit
 
+<details>
+
 <a href="https://lucia-auth.com/getting-started/sveltekit" target="_blank">https://lucia-auth.com/getting-started/sveltekit</a>
 
 Install Lucia using the package manager of your choice.
@@ -290,7 +292,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 ```
 
+</details>
+
 ## 2.0 Sign in with username and password using adapter Prisma and Sqlite
+
+<details>
 
 <a href="https://lucia-auth.com/basics/database#database-model" target="_blank">https://lucia-auth.com/basics/database#database-model</a>
 
@@ -438,7 +444,11 @@ export const auth = lucia({
 export type Auth = typeof auth;
 ```
 
+</details>
+
 ## 3.0 Create a Sign up page
+
+<details>
 
 To create users we need a form that sends `username` and `password` values to our database.
 
@@ -474,7 +484,11 @@ Link to the `signup` route from the `index` page.
 <a href="/signup">Sign up</a>
 ```
 
+</details>
+
 ## 4.0 Create users in the database
+
+<details>
 
 <a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users</a>
 
@@ -1234,7 +1248,11 @@ On the other hand, making the `username` stored as a user attribute lowercase is
 
 However, if you need to query users using usernames (e.g. url `/user/user123`), it may be beneficial to require the username to be lowercase, store 2 usernames (lowercase and normal), or set the database to ignore casing when compare strings (e.g. using LOWER() in SQL).
 
+</details>
+
 ## 5.0 Redirect authenticated users
+
+<details>
 
 After a new user has successfully registered a new `username` on the `signup` page it makes sense to `redirect` that user to another page of the app instead of staying on the `signup` page.
 
@@ -1761,7 +1779,11 @@ On the index page a link to the `profile` page and try to access this page if yo
 <a href="/profile">Profile</a>
 ```
 
+</details>
+
 ## 6.0 Sign out users
+
+<details>
 
 So far we have shown user data on the `profile` page.
 
@@ -1843,3 +1865,5 @@ export const actions: Actions = {
 	}
 };
 ```
+
+</details>
