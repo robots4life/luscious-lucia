@@ -1,4 +1,4 @@
-<img src="/docs/lucia.png">
+<img src="/username-password-prisma-sqlite/docs/lucia.png">
 
 I am using `pnpm` and these aliases and oh my zsh.
 
@@ -747,13 +747,13 @@ Open <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>
 
 `px prisma studio`
 
-<img src="/docs/prisma_studio.png">
+<img src="/username-password-prisma-sqlite/docs/prisma_studio.png">
 
 Start the development server from another terminal.
 
 `p dev`
 
-<img src="/docs/sveltekit_index.png">
+<img src="/username-password-prisma-sqlite/docs/sveltekit_index.png">
 
 Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a>.
 
@@ -780,15 +780,15 @@ password : password123456789000
 
 On the `signup` page you should see the created `user` object.
 
-<img src="/docs/created_user_object.png">
+<img src="/username-password-prisma-sqlite/docs/created_user_object.png">
 
-Have a look at Prisma Studio now and refresh the page <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>. You should see the created `user`.
+Have a look at Prisma Studio now and refresh the page <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>. You should see that there is in entry in the `User` row as well as `Key` row.
 
-<img src="/docs/prisma_studio_created_user.png">
+<img src="/username-password-prisma-sqlite/docs/prisma_studio_created_user.png">
 
 Click on `User` to have a look at the created data.
 
-<img src="/docs/prisma_studio_created_user_details.png">
+<img src="/username-password-prisma-sqlite/docs/prisma_studio_created_user_details.png">
 
 Well done, you just created your first user with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:
 
@@ -882,16 +882,16 @@ export const actions = {
 
 Go to your Prisma Studio on <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>, select the `User` row and hit `Delete 1 record` to delete the previously created user. If you have any other users then delete all those as well so that you have zero records in the database.
 
-<img src="/docs/prisma_studio_delete_user.png">
+<img src="/username-password-prisma-sqlite/docs/prisma_studio_delete_user.png">
 
-Go to the `signup` page and now let's create a new user and a session stored as a cookie for that new ser.
+Go to the `signup` page and now let's create a new user and a session stored as a cookie for that new user.
 
 Fill in the form values and submit the form.
 
 username : `JaneSmith8000`
 password : `000987654321password`
 
-<img src="/docs/create_new_user.png">
+<img src="/username-password-prisma-sqlite/docs/create_new_user.png">
 
 Once you submit the form check your terminal, the `username` and `password` values from the form should be logged there.
 
@@ -909,30 +909,29 @@ username : JaneSmith8000
 password : 000987654321password
 ```
 
-Again, the SvelteKit default form action returns the newly created user object to the page where we display its values.
+Again, the SvelteKit default form action returns the newly created `user` object to the page where we display its values.
 
-<img src="/docs/created_new_user_object.png">
+<img src="/username-password-prisma-sqlite/docs/created_new_user_object.png">
 
-Go to your Prisma Studio on <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>
-and refresh the page.
+Go to your Prisma Studio on <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and refresh the page.
 
 You should now see a new user and a new session.
 
-<img src="/docs/prisma_studio_new_created_user_and_session.png">
+<img src="/username-password-prisma-sqlite/docs/prisma_studio_new_created_user_and_session.png">
 
 Click on `User` to see the created user and click on `Session` to the current session for that user.
 
 The created `User`.
 
-<img src="/docs/prisma_studio_show_new_user.png">
+<img src="/username-password-prisma-sqlite/docs/prisma_studio_show_new_user.png">
 
 The created `Session`.
 
-<img src="/docs/prisma_studio_show_new_user_session.png">
+<img src="/username-password-prisma-sqlite/docs/prisma_studio_show_new_user_session.png">
 
 Now let's have a look at the created session cookie in the browser development tools.
 
-<img src="/docs/browser_session_cookie.png">
+<img src="/username-password-prisma-sqlite/docs/browser_session_cookie.png">
 
 Well done, you just created a new user and a session for that new user that is stored as a cookie, all this with a SvelteKit form default action, using Lucia with Prisma and Sqlite. :tada:
 
@@ -1354,7 +1353,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 **After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.**
 
-Since we now do have a `load` function for the `signup` page **WE WANT THE LOAD FUNCTION TO RUN** after the default form action. The page will only be re-rendered if there is no redirect, however we do have a redirect in place after the `try catch` block. Hence we now remove this `redirect` and thus enable the `load` function for the page to re-run after the form action. Note are also not returning the `user` object to the page `form` property any more.
+Since we now do have a `load` function for the `signup` page **WE WANT THE LOAD FUNCTION TO RUN** after the default form action. The page will only be re-rendered if there is no redirect, however we do have a redirect in place after the `try catch` block. Hence we now remove this `redirect` and thus enable the `load` function for the page to re-run after the form action. Note that we are also not returning the `user` object to the page `form` property any more.
 
 ```ts
 import { auth } from '$lib/server/lucia';
@@ -1524,7 +1523,7 @@ Create a `+page.svelte` file in `src/routes/profile`. We use the page `data` pro
 
 On the `profile` page <a href="http://localhost:5173/profile" target="_blank">http://localhost:5173/profile</a> we can now display the user data.
 
-<img src="/docs/profile_page_show_user_data.png">
+<img src="/username-password-prisma-sqlite/docs/profile_page_show_user_data.png">
 
 ### 5.2 Create a Log in page
 
@@ -1757,7 +1756,11 @@ export const actions: Actions = {
 
 ### 5.3 Add a link to the Profile page
 
-On the index page a link to the `profile` page and try to access this page if you are logged in and if you are not logged in. If you are not logged in or have just signed up with a new user you will be redirected to the index page.
+On the index page add a link to the `profile` page and try to access this page if you are logged in and if you are not logged in.
+
+If you are not logged in you will be redirected to the index page.
+
+If you have just signed up with a new user you will be redirected to the profile page.
 
 **src/routes/+page.svelte**
 
@@ -1838,6 +1841,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			username: session.user.username
 		};
 	}
+	// since the load function needs to return data to the page we return an empty object
+	return {};
 };
 
 export const actions: Actions = {
