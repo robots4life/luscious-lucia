@@ -14,9 +14,38 @@ alias pa='pnpm add'
 alias px="pnpm dlx"
 ```
 
-## 1.0 Getting Started in SvelteKit
+- [1.0 Getting Started in SvelteKit](#10-getting-started-in-sveltekit)
+  - [1.1 Initialize Lucia](#11-initialize-lucia)
+  - [1.2 Setup your database](#12-setup-your-database)
+    - [1.2.1 Prisma adapter](#121-prisma-adapter)
+    - [1.2.2 Add Prisma to SvelteKit](#122-add-prisma-to-sveltekit)
+    - [1.2.3 Set up Prisma](#123-set-up-prisma)
+    - [1.2.4 Set up Prisma schema](#124-set-up-prisma-schema)
+    - [1.2.5 Install Lucia database adapter Prisma](#125-install-lucia-database-adapter-prisma)
+    - [1.2.6 Add default values to lucia.ts](#126-add-default-values-to-luciats)
+  - [1.3 Set up types](#13-set-up-types)
+  - [1.4 Set up hooks](#14-set-up-hooks)
+- [2.0 Sign in with username and password using adapter Prisma and Sqlite](#20-sign-in-with-username-and-password-using-adapter-prisma-and-sqlite)
+  - [2.1 Update your database](#21-update-your-database)
+  - [2.2 Update your types](#22-update-your-types)
+  - [2.3 Configure Lucia](#23-configure-lucia)
+- [3.0 Create a Sign up page](#30-create-a-sign-up-page)
+- [4.0 Create users in the database](#40-create-users-in-the-database)
+  - [4.1 Learn about SvelteKit form actions](#41-learn-about-sveltekit-form-actions)
+  - [4.2 Create a form action for the signup page](#42-create-a-form-action-for-the-signup-page)
+    - [4.2.1 Do a basic check for the received form values](#421-do-a-basic-check-for-the-received-form-values)
+    - [4.2.2 Use `auth.createUser` from Lucia](#422-use--authcreateuser--from-lucia)
+    - [4.2.3 Use `auth.createSession()` and `auth.setSession()` from Lucia](#423-use--authcreatesession----and--authsetsession----from-lucia)
+    - [4.2.4 Handle errors](#424-handle-errors)
+    - [4.2.5 Handle case sensitive user input](#425-handle-case-sensitive-user-input)
+- [5.0 Redirect authenticated users](#50-redirect-authenticated-users)
+  - [5.1 Create a Profile page](#51-create-a-profile-page)
+  - [5.2 Create a Log in page](#52-create-a-log-in-page)
+  - [5.3 Add a link to the Profile page](#53-add-a-link-to-the-profile-page)
+- [6.0 Sign out users](#60-sign-out-users)
+  - [6.1 Sign out users with a SvelteKit named form action](#61-sign-out-users-with-a-sveltekit-named-form-action)
 
-<details>
+## 1.0 Getting Started in SvelteKit
 
 <a href="https://lucia-auth.com/getting-started/sveltekit" target="_blank">https://lucia-auth.com/getting-started/sveltekit</a>
 
@@ -292,11 +321,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 ```
 
-</details>
-
 ## 2.0 Sign in with username and password using adapter Prisma and Sqlite
-
-<details>
 
 <a href="https://lucia-auth.com/basics/database#database-model" target="_blank">https://lucia-auth.com/basics/database#database-model</a>
 
@@ -444,11 +469,7 @@ export const auth = lucia({
 export type Auth = typeof auth;
 ```
 
-</details>
-
 ## 3.0 Create a Sign up page
-
-<details>
 
 To create users we need a form that sends `username` and `password` values to our database.
 
@@ -484,11 +505,7 @@ Link to the `signup` route from the `index` page.
 <a href="/signup">Sign up</a>
 ```
 
-</details>
-
 ## 4.0 Create users in the database
-
-<details>
 
 <a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#create-users</a>
 
@@ -1248,11 +1265,7 @@ On the other hand, making the `username` stored as a user attribute lowercase is
 
 However, if you need to query users using usernames (e.g. url `/user/user123`), it may be beneficial to require the username to be lowercase, store 2 usernames (lowercase and normal), or set the database to ignore casing when compare strings (e.g. using LOWER() in SQL).
 
-</details>
-
 ## 5.0 Redirect authenticated users
-
-<details>
 
 After a new user has successfully registered a new `username` on the `signup` page it makes sense to `redirect` that user to another page of the app instead of staying on the `signup` page.
 
@@ -1781,11 +1794,7 @@ On the index page a link to the `profile` page and try to access this page if yo
 <a href="/profile">Profile</a>
 ```
 
-</details>
-
 ## 6.0 Sign out users
-
-<details>
 
 So far we have shown user data on the `profile` page.
 
@@ -1869,5 +1878,3 @@ export const actions: Actions = {
 	}
 };
 ```
-
-</details>
