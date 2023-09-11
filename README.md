@@ -1517,6 +1517,8 @@ Create a `+page.svelte` file in `src/routes/profile`. We use the page `data` pro
 	export let data: PageData;
 </script>
 
+<h1>Profile</h1>
+
 {#if Object.keys(data).length !== 0}
 	<pre>{JSON.stringify(data, null, 2)}</pre>
 {/if}
@@ -1798,6 +1800,8 @@ For this we are going to add a simple form that will be connected to a named Sve
 	import type { PageData } from './$types';
 	export let data: PageData;
 </script>
+
+<h1>Profile</h1>
 
 {#if Object.keys(data).length !== 0}
 	<pre>{JSON.stringify(data, null, 2)}</pre>

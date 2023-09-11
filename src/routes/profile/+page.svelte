@@ -3,6 +3,8 @@
 	export let data: PageData;
 </script>
 
+<h1>Profile</h1>
+
 {#if Object.keys(data).length !== 0}
 	<pre>{JSON.stringify(data, null, 2)}</pre>
 {/if}
