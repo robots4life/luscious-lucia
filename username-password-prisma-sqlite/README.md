@@ -1460,6 +1460,8 @@ export const actions = {
 		// https://kit.svelte.dev/docs/load#redirects
 		// make sure you don't throw inside a try/catch block!
 		// throw redirect(302, '/');
+		// if we want the load function to run and the page to be re-rendered after
+		// the form action has complete we omit the redirect and handle further logic in the load function
 	}
 } satisfies Actions;
 ```
@@ -1747,9 +1749,12 @@ export const actions: Actions = {
 				message: 'An unknown error occurred'
 			});
 		}
+		// throw a SvelteKit redirect if none of the error conditions apply
+		// https://kit.svelte.dev/docs/load#redirects
 		// make sure you don't throw inside a try/catch block!
-		// redirect to
 		// throw redirect(302, '/');
+		// if we want the load function to run and the page to be re-rendered after
+		// the form action has complete we omit the redirect and handle further logic in the load function
 	}
 };
 ```
