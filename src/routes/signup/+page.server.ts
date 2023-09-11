@@ -6,11 +6,16 @@ import { Prisma } from '@prisma/client';
 
 import type { PageServerLoad } from './$types';
 
+// the return {}; at the end of the try block below makes the
+// load function for the signup page run once the form has been submitted
+// and redirect the user to the profile page if the session is valid
+//
+// if we omit the return {}; from the end of the try block the load function WILL NOT run
+// and the user will stay on the signup page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
-	//
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
@@ -69,7 +74,13 @@ export const actions = {
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
 
-			// let's return the created user back to the sign up page
+			// THIS IS VERY IMPORTANT
+			// if we do not return any data from the form action
+			// the load function for this page will not re-run
+			// and thus not re-direct the authenticated user to the profile page
+			//
+			// for now we return the user in an object to the page to show the newly created user object
+			// in later lessons the just becomes return {};
 			return { user };
 		} catch (e) {
 			//

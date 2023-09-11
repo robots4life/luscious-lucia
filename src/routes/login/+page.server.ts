@@ -5,11 +5,16 @@ import { fail, redirect } from '@sveltejs/kit';
 
 import type { PageServerLoad } from './$types';
 
+// the return {}; at the end of the try block below makes the
+// load function for the login page run once the form has been submitted
+// and redirect the user to the profile page if the session is valid
+//
+// if we omit the return {}; from the end of the try block the load function WILL NOT run
+// and the user will stay on the login page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
-	//
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
@@ -57,6 +62,12 @@ export const actions: Actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
+
+			// THIS IS VERY IMPORTANT
+			// if we do not return any data from the form action
+			// the load function for this page will not re-run
+			// and thus not re-direct the authenticated user to the profile page
+			return {};
 		} catch (e) {
 			if (
 				e instanceof LuciaError &&

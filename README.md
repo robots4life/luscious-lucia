@@ -672,7 +672,7 @@ export const actions = {
 				}
 			});
 
-			// let's return the created user back to the sign up page
+			// let's return the created user back to the sign up page for now
 			return { user };
 		} catch (e) {
 			console.log(e);
@@ -840,7 +840,7 @@ export const actions = {
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
 
-			// let's return the created user back to the sign up page
+			// let's return the created user back to the sign up page for now
 			return { user };
 		} catch (e) {
 			console.log(e);
@@ -1157,7 +1157,7 @@ export const actions = {
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
 
-			// let's return the created user back to the sign up page
+			// let's return the created user back to the sign up page for now
 			return { user };
 		} catch (e) {
 			//
@@ -1315,6 +1315,143 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 ```
 
+There is one very important bit of code in the **src/routes/signup/+page.server.ts** file.
+
+At the end of the `try` block we `return` the `user` inside an object to the `signup` page.
+
+This was done in the previous chapters to show you the newly created `user` on the `signup` page.
+
+**Returning this data from inside the form action also makes the `load` function of the page re-run.**
+
+If we **do not** `return` data from an form action the `load` function of the page will **NOT re-run**.
+
+So now that we do have a `load` function on the s`signup` page and inside it check if there is a valid `session` we can just `return` an empty object from the form action and thus make the `load` function of the `signup` page run and in consequence `redirect` the user to the `profile` page.
+
+<a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>
+
+**After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import { LuciaError } from 'lucia';
+import type { Actions } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import { Prisma } from '@prisma/client';
+
+import type { PageServerLoad } from './$types';
+
+// the return {}; at the end of the try block below makes the
+// load function for the signup page run once the form has been submitted
+// and redirect the user to the profile page if the session is valid
+//
+// if we omit the return {}; from the end of the try block the load function WILL NOT run
+// and the user will stay on the signup page
+export const load: PageServerLoad = async ({ locals }) => {
+	// call the validate() method to check for a valid session
+	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
+	const session = await locals.auth.validate();
+	if (session) {
+		// we redirect the user to the profile page if the session is valid
+		throw redirect(302, '/profile');
+	}
+	// since the load function needs to return data to the page we return an empty object
+	return {};
+};
+
+export const actions = {
+	default: async ({ request, locals }) => {
+		//
+		// CREATE the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+
+		// basic check
+		if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
+			// use SvelteKit's fail function to return the error
+			return fail(400, {
+				message: 'Invalid username'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createuser
+			// create a new user
+			const user = await auth.createUser({
+				key: {
+					providerId: 'username', // auth method
+					providerUserId: username.toLowerCase(), // unique id when using "username" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					username
+				}
+			});
+
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createsession
+			// create a new session once the user is created
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
+			// store the session on the locals object and set session cookie
+			locals.auth.setSession(session);
+
+			// THIS IS VERY IMPORTANT
+			// if we do not return any data from the form action
+			// the load function for this page will not re-run
+			// and thus not re-direct the authenticated user to the profile page
+			//
+			// for now we return the user in an object to the page to show the newly created user object
+			// in later lessons the just becomes return {};
+			return { user };
+		} catch (e) {
+			//
+			// Prisma error
+			// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+			if (e instanceof Prisma.PrismaClientKnownRequestError) {
+				//
+				// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+				// The .code property can be accessed in a type-safe manner
+				if (e.code === 'P2002') {
+					console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+					console.log('\n');
+					console.log('e : ' + e);
+					console.log('e.meta : ' + e?.meta);
+					console.log('e.meta.target : ' + e?.meta?.target);
+
+					// return the error to the page with SvelteKit's fail function
+					// https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors
+					return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
+				}
+			}
+			// Lucia error
+			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+			if (e instanceof LuciaError) {
+				// Lucia error
+				console.log(e);
+				return fail(500, { message: e });
+			}
+			// throw a SvelteKit redirect
+			// https://kit.svelte.dev/docs/load#redirects
+			// make sure you don't throw inside a try/catch block!
+			throw redirect(302, '/');
+		}
+	}
+} satisfies Actions;
+```
+
 ### 5.1 Create a Profile page
 
 Create a `+page.server.ts` file in `src/routes/profile`. We use the `load` function to load data for the `profile` page.
@@ -1371,7 +1508,7 @@ On the `profile` page <a href="http://localhost:5173/profile" target="_blank">ht
 
 <img src="/docs/profile_page_show_user_data.png">
 
-### 5.1 Create a Log in page
+### 5.2 Create a Log in page
 
 <a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#sign-in-page" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#sign-in-page</a>
 
@@ -1486,11 +1623,16 @@ If the username and password are correct and validated we should redirect the us
 ```ts
 import type { PageServerLoad } from './$types';
 
+// the return {}; at the end of the try block below makes the
+// load function for the login page run once the form has been submitted
+// and redirect the user to the profile page if the session is valid
+//
+// if we omit the return {}; from the end of the try block the load function WILL NOT run
+// and the user will stay on the login page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
-	//
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
@@ -1502,6 +1644,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 The **src/routes/login/+page.server.ts** file now looks like this with the added `load` function to redirect to the `profile` page.
 
+Again there is one very important bit of code in the **src/routes/login/+page.server.ts** file as previously explained in <a href="https://github.com/robots4life/luscious-lucia#50-redirect-authenticated-users" target="_blank">https://github.com/robots4life/luscious-lucia#50-redirect-authenticated-users</a>.
+
+We `return` an empty object at the end of the try block in order to make the `load` function run once the form values have been submitted to the `login` form on the `login` page.
+
+<a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>
+
+**After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.**
+
 **src/routes/login/+page.server.ts**
 
 ```ts
@@ -1512,11 +1662,16 @@ import { fail, redirect } from '@sveltejs/kit';
 
 import type { PageServerLoad } from './$types';
 
+// the return {}; at the end of the try block below makes the
+// load function for the login page run once the form has been submitted
+// and redirect the user to the profile page if the session is valid
+//
+// if we omit the return {}; from the end of the try block the load function WILL NOT run
+// and the user will stay on the login page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
-	//
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
@@ -1564,6 +1719,12 @@ export const actions: Actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
+
+			// THIS IS VERY IMPORTANT
+			// if we do not return any data from the form action
+			// the load function for this page will not re-run
+			// and thus not re-direct the authenticated user to the profile page
+			return {};
 		} catch (e) {
 			if (
 				e instanceof LuciaError &&
@@ -1581,6 +1742,104 @@ export const actions: Actions = {
 		// redirect to
 		// make sure you don't throw inside a try/catch block!
 		throw redirect(302, '/');
+	}
+};
+```
+
+### 5.3 Add a link to the Profile page
+
+On the index page a link to the `profile` page and try to access this page if you are logged in and if you are not logged in. If you are not logged in or have just signed up with a new user you will be redirected to the index page.
+
+**src/routes/+page.svelte**
+
+```js
+<h1>Welcome to SvelteKit</h1>
+<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+
+<a href="/signup">Sign up</a>
+<a href="/login">Log in</a>
+<a href="/profile">Profile</a>
+```
+
+## 6.0 Sign out users
+
+So far we have shown user data on the `profile` page.
+
+Now we are going to enable users to sign out on the profile page.
+
+For this we are going to add a simple form that will be connected to a named SvelteKit form action.
+
+**src/routes/profile/+page.svelte**
+
+```js
+<script lang="ts">
+	import type { PageData } from './$types';
+	export let data: PageData;
+</script>
+
+{#if Object.keys(data).length !== 0}
+	<pre>{JSON.stringify(data, null, 2)}</pre>
+{/if}
+
+<form method="post" action="?/logout">
+	<input type="submit" value="Sign out" />
+</form>
+
+<a href="/">Home</a>
+```
+
+### 6.1 Sign out users with a SvelteKit named form action
+
+<a href="https://kit.svelte.dev/docs/form-actions#named-actions" target="_blank">https://kit.svelte.dev/docs/form-actions#named-actions</a>
+
+Instead of one `default` action, a page can have as many `named` actions as it needs.
+
+When logging out users, it’s critical that you invalidate the user’s session.
+
+This can be achieved with `Auth.invalidateSession()`.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth#invalidatesession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth#invalidatesession</a>
+
+You can delete the session cookie by overriding the existing one with a blank cookie that expires immediately.
+
+This can be done by passing `null` to `AuthRequest.setSession()`.
+
+**src/routes/profile/+page.server.ts**
+
+```ts
+import { redirect, type Actions, fail } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { auth } from '$lib/server/lucia';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	// call the validate() method to check for a valid session
+	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
+	const session = await locals.auth.validate();
+
+	if (!session) {
+		// if the session is not valid we redirect the user back to the index page
+		throw redirect(302, '/');
+	}
+	// if the user session is validated we return the user data to the profile page
+	return {
+		userId: session.user.userId,
+		username: session.user.username
+	};
+};
+
+export const actions: Actions = {
+	logout: async ({ locals }) => {
+		const session = await locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		// https://lucia-auth.com/reference/lucia/interfaces/auth#invalidatesession
+		await auth.invalidateSession(session.sessionId); // invalidate session
+
+		// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
+		locals.auth.setSession(null); // remove cookie
+
+		throw redirect(302, '/'); // redirect to index page
 	}
 };
 ```

@@ -6,3 +6,9 @@
 {#if Object.keys(data).length !== 0}
 	<pre>{JSON.stringify(data, null, 2)}</pre>
 {/if}
+
+<form method="post" action="?/logout">
+	<input type="submit" value="Sign out" />
+</form>
+
+<a href="/">Home</a>
