@@ -45,6 +45,7 @@ export const actions = {
 		}
 
 		try {
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createuser
 			// create a new user
 			const user = await auth.createUser({
 				key: {
@@ -57,13 +58,16 @@ export const actions = {
 				}
 			});
 
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createsession
 			// create a new session once the user is created
 			const session = await auth.createSession({
 				userId: user.userId,
 				attributes: {}
 			});
-			// store the session as a cookie on the locals object
-			locals.auth.setSession(session); // set session cookie
+
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
+			// store the session on the locals object and set session cookie
+			locals.auth.setSession(session);
 
 			// let's return the created user back to the sign up page
 			return { user };

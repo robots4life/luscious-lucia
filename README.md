@@ -438,7 +438,7 @@ export const auth = lucia({
 export type Auth = typeof auth;
 ```
 
-## 3.0 Create a sign up page
+## 3.0 Create a Sign up page
 
 To create users we need a form that sends `username` and `password` values to our database.
 
@@ -471,7 +471,7 @@ Link to the `signup` route from the `index` page.
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 
-<a href="/signup">Signup</a>
+<a href="/signup">Sign up</a>
 ```
 
 ## 4.0 Create users in the database
@@ -659,6 +659,7 @@ export const actions = {
 		}
 
 		try {
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createuser
 			// create a new user
 			const user = await auth.createUser({
 				key: {
@@ -701,7 +702,7 @@ On the `signup` page we show the created `user` object from the successful user 
 
 <a href="/">Home</a>
 
-<!-- last not least, we check if the form property has a value and display it -->
+<!-- we check if the form property has a value and display it -->
 {#if form}
 	<pre>{JSON.stringify(form, null, 2)}</pre>
 {/if}
@@ -723,9 +724,12 @@ Start the development server from another terminal.
 
 <img src="/docs/sveltekit_index.png">
 
-Go to the `signup` page.
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a>.
 
 Fill in the form values and submit the form.
+
+username : `JohnSmith4000`
+password : `password123456789000`
 
 In your terminal you should have the following output.
 
@@ -777,7 +781,7 @@ const session = await auth.createSession({
 locals.auth.setSession(session); // set session cookie
 ```
 
-The **+page.server.ts** file now looks like this with the added `session` and `cookie`.
+The **src/routes/signup/+page.server.ts** file now looks like this with the added `session` and `cookie`.
 
 **src/routes/signup/+page.server.ts**
 
@@ -812,6 +816,7 @@ export const actions = {
 		}
 
 		try {
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createuser
 			// create a new user
 			const user = await auth.createUser({
 				key: {
@@ -824,13 +829,16 @@ export const actions = {
 				}
 			});
 
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createsession
 			// create a new session once the user is created
 			const session = await auth.createSession({
 				userId: user.userId,
 				attributes: {}
 			});
-			// store the session as a cookie on the locals object
-			locals.auth.setSession(session); // set session cookie
+
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
+			// store the session on the locals object and set session cookie
+			locals.auth.setSession(session);
 
 			// let's return the created user back to the sign up page
 			return { user };
@@ -841,12 +849,16 @@ export const actions = {
 } satisfies Actions;
 ```
 
-Go to your Prisma Studio on <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>, select the `User` row and hit `Delete 1 record` to delete the previously created user.
+Go to your Prisma Studio on <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>, select the `User` row and hit `Delete 1 record` to delete the previously created user. If you have any other users then delete all those as well so that you have zero records in the database.
 
 <img src="/docs/prisma_studio_delete_user.png">
 
-Go to the `signup` page and now let's create a user and a session stored as a cookie for that user.
-I am using `JaneSmith8000` as username and `000987654321password` as password.
+Go to the `signup` page and now let's create a new user and a session stored as a cookie for that new ser.
+
+Fill in the form values and submit the form.
+
+username : `JaneSmith8000`
+password : `000987654321password`
 
 <img src="/docs/create_new_user.png">
 
@@ -1084,7 +1096,7 @@ The error object is returned as part of the page `form` property for the `signup
 {/if}
 ```
 
-The **+page.server.ts** file now looks like this with the added `error` handling.
+The **src/routes/signup/+page.server.ts** file now looks like this with the added `error` handling.
 
 **src/routes/signup/+page.server.ts**
 
@@ -1121,6 +1133,7 @@ export const actions = {
 		}
 
 		try {
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createuser
 			// create a new user
 			const user = await auth.createUser({
 				key: {
@@ -1133,13 +1146,16 @@ export const actions = {
 				}
 			});
 
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createsession
 			// create a new session once the user is created
 			const session = await auth.createSession({
 				userId: user.userId,
 				attributes: {}
 			});
-			// store the session as a cookie on the locals object
-			locals.auth.setSession(session); // set session cookie
+
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
+			// store the session on the locals object and set session cookie
+			locals.auth.setSession(session);
 
 			// let's return the created user back to the sign up page
 			return { user };
@@ -1277,6 +1293,12 @@ The `validate` method returns a `Session` if the user is authenticated or `null`
 **src/routes/signup/+page.server.ts**
 
 ```ts
+import { auth } from '$lib/server/lucia';
+import { LuciaError } from 'lucia';
+import type { Actions } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import { Prisma } from '@prisma/client';
+
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -1293,29 +1315,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 ```
 
-### 5.1 Create a profile page
+### 5.1 Create a Profile page
 
-Create a `+page.svelte` file in `src/routes/profile`. We use the page `data` property to display the loaded data for that page.
-
-**src/routes/profile/+page.svelte**
-
-```js
-<script lang="ts">
-	import type { PageData } from './$types';
-	export let data: PageData;
-</script>
-
-{#if Object.keys(data).length !== 0}
-	<pre>{JSON.stringify(data, null, 2)}</pre>
-{/if}
-```
-
-Create a `+page.server.ts` file in `src/routes/profile`. We use the `load` function to load data for the profile page.
+Create a `+page.server.ts` file in `src/routes/profile`. We use the `load` function to load data for the `profile` page.
 
 **src/routes/profile/+page.server.ts**
 
 ```ts
-// routes/+page.server.ts
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -1324,8 +1330,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
 	if (!session) {
-		// if the session is not valid we redirect the user back to the signup page
-		throw redirect(302, '/signup');
+		// if the session is not valid we redirect the user back to the index page
+		throw redirect(302, '/');
 	}
 	// if the user session is validated we return the user data to the profile page
 	return {
@@ -1346,6 +1352,235 @@ getUserAttributes: (data) => {
 };
 ```
 
+Create a `+page.svelte` file in `src/routes/profile`. We use the page `data` property to display the loaded data for that page.
+
+**src/routes/profile/+page.svelte**
+
+```js
+<script lang="ts">
+	import type { PageData } from './$types';
+	export let data: PageData;
+</script>
+
+{#if Object.keys(data).length !== 0}
+	<pre>{JSON.stringify(data, null, 2)}</pre>
+{/if}
+```
+
 On the `profile` page <a href="http://localhost:5173/profile" target="_blank">http://localhost:5173/profile</a> we can now display the user data.
 
 <img src="/docs/profile_page_show_user_data.png">
+
+### 5.1 Create a Log in page
+
+<a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#sign-in-page" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit#sign-in-page</a>
+
+Create a `+page.svelte` file in `src/routes/login`. It will have a form with inputs for username and password.
+
+```js
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	export let form;
+</script>
+
+<h1>Log in</h1>
+<form method="post" use:enhance>
+	<label for="username">Username</label>
+	<input name="username" id="username" /><br />
+	<label for="password">Password</label>
+	<input type="password" name="password" id="password" /><br />
+	<input type="submit" />
+</form>
+
+<a href="/">Home</a>
+
+{#if form}
+	<pre>{JSON.stringify(form, null, 2)}</pre>
+{/if}
+```
+
+Create a `+page.server.ts` file in `src/routes/login`. We use the `load` function to load data for the `login` page.
+
+The key we created for the user allows us to get/read the user via their username, and validate their password.
+
+This can be done with `Auth.useKey()`.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth#usekey" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth#usekey</a>
+
+If the username and password is **correct**, we’ll create a new session just like we did in <a href="https://github.com/robots4life/luscious-lucia#423-use-authcreatesession-and-authsetsession-from-lucia" target="_blank">4.2.3 Use auth.createSession() and auth.setSession() from Lucia</a>.
+
+If the username or password is **incorrect**, Lucia will throw an error. Make sure to make the `username` lowercase before calling `useKey()`.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import { LuciaError } from 'lucia';
+import type { Actions } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		//
+		// READ the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+
+		// basic check
+		if (typeof username !== 'string' || username.length < 1 || username.length > 31) {
+			return fail(400, {
+				message: 'Invalid username'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 1 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#usekey
+			// find user by key and check if the password is defined and check if the password is correct/valid
+			const key = await auth.useKey('username', username.toLowerCase(), password);
+
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createsession
+			// create a new session once the user is validated
+			const session = await auth.createSession({
+				userId: key.userId,
+				attributes: {}
+			});
+
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
+			// store the session on the locals object and set session cookie
+			locals.auth.setSession(session);
+		} catch (e) {
+			if (
+				e instanceof LuciaError &&
+				(e.message === 'AUTH_INVALID_KEY_ID' || e.message === 'AUTH_INVALID_PASSWORD')
+			) {
+				// user does not exist or invalid password
+				return fail(400, {
+					message: 'Incorrect username or password'
+				});
+			}
+			return fail(500, {
+				message: 'An unknown error occurred'
+			});
+		}
+		// redirect to
+		// make sure you don't throw inside a try/catch block!
+		throw redirect(302, '/');
+	}
+};
+```
+
+If the username and password are correct and validated we should redirect the user to the `profile` page. Again, this is done be defining a `load` function.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	// call the validate() method to check for a valid session
+	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
+	const session = await locals.auth.validate();
+	//
+	if (session) {
+		// we redirect the user to the profile page if the session is valid
+		throw redirect(302, '/profile');
+	}
+	// since the load function needs to return data to the page we return an empty object
+	return {};
+};
+```
+
+The **src/routes/login/+page.server.ts** file now looks like this with the added `load` function to redirect to the `profile` page.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import { LuciaError } from 'lucia';
+import type { Actions } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	// call the validate() method to check for a valid session
+	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
+	const session = await locals.auth.validate();
+	//
+	if (session) {
+		// we redirect the user to the profile page if the session is valid
+		throw redirect(302, '/profile');
+	}
+	// since the load function needs to return data to the page we return an empty object
+	return {};
+};
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		//
+		// READ the user with the supplied form data
+		const formData = await request.formData();
+
+		const username = formData.get('username');
+		console.log(`username : ` + username);
+
+		const password = formData.get('password');
+		console.log(`password : ` + password);
+
+		// basic check
+		if (typeof username !== 'string' || username.length < 1 || username.length > 31) {
+			return fail(400, {
+				message: 'Invalid username'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 1 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#usekey
+			// find user by key and check if the password is defined and check if the password is correct/valid
+			const key = await auth.useKey('username', username.toLowerCase(), password);
+
+			// https://lucia-auth.com/reference/lucia/interfaces/auth#createsession
+			// create a new session once the user is validated
+			const session = await auth.createSession({
+				userId: key.userId,
+				attributes: {}
+			});
+
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
+			// store the session on the locals object and set session cookie
+			locals.auth.setSession(session);
+		} catch (e) {
+			if (
+				e instanceof LuciaError &&
+				(e.message === 'AUTH_INVALID_KEY_ID' || e.message === 'AUTH_INVALID_PASSWORD')
+			) {
+				// user does not exist or invalid password
+				return fail(400, {
+					message: 'Incorrect username or password'
+				});
+			}
+			return fail(500, {
+				message: 'An unknown error occurred'
+			});
+		}
+		// redirect to
+		// make sure you don't throw inside a try/catch block!
+		throw redirect(302, '/');
+	}
+};
+```
