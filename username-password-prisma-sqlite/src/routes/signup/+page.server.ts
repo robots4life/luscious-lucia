@@ -6,12 +6,6 @@ import { Prisma } from '@prisma/client';
 
 import type { PageServerLoad } from './$types';
 
-// the return {}; at the end of the try block below makes the
-// load function for the signup page run once the form has been submitted
-// and redirect the user to the profile page if the session is valid
-//
-// if we omit the return {}; from the end of the try block the load function WILL NOT run
-// and the user will stay on the signup page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
@@ -73,15 +67,6 @@ export const actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
-
-			// THIS IS VERY IMPORTANT
-			// if we do not return any data from the form action
-			// the load function for this page will not re-run
-			// and thus not re-direct the authenticated user to the profile page
-			//
-			// for now we return the user in an object to the page to show the newly created user object
-			// in later lessons the just becomes return {};
-			return { user };
 		} catch (e) {
 			//
 			// Prisma error
@@ -109,10 +94,10 @@ export const actions = {
 				console.log(e);
 				return fail(500, { message: e });
 			}
-			// throw a SvelteKit redirect
-			// https://kit.svelte.dev/docs/load#redirects
-			// make sure you don't throw inside a try/catch block!
-			throw redirect(302, '/');
 		}
+		// make sure you don't throw inside a try/catch block!
+		// throw a SvelteKit redirect
+		// https://kit.svelte.dev/docs/load#redirects
+		// throw redirect(302, '/');
 	}
 } satisfies Actions;

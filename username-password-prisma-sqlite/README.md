@@ -1092,7 +1092,7 @@ try {
 		console.log(e);
 		return fail(500, { message: e });
 	}
-	// throw a SvelteKit redirect
+	// throw a SvelteKit redirect if none of the error conditions apply
 	// https://kit.svelte.dev/docs/load#redirects
 	// make sure you don't throw inside a try/catch block!
 	throw redirect(302, '/');
@@ -1217,11 +1217,11 @@ export const actions = {
 				console.log(e);
 				return fail(500, { message: e });
 			}
-			// throw a SvelteKit redirect
-			// https://kit.svelte.dev/docs/load#redirects
-			// make sure you don't throw inside a try/catch block!
-			throw redirect(302, '/');
 		}
+		// throw a SvelteKit redirect if none of the error conditions apply
+		// https://kit.svelte.dev/docs/load#redirects
+		// make sure you don't throw inside a try/catch block!
+		throw redirect(302, '/');
 	}
 } satisfies Actions;
 ```
@@ -1346,18 +1346,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 ```
 
-There is one very important bit of code in the **src/routes/signup/+page.server.ts** file.
-
-At the end of the `try` block we `return` the `user` inside an object to the `signup` page.
-
-This was done in the previous chapters to show you the newly created `user` on the `signup` page.
-
-**Returning this data from inside the form action also makes the `load` function of the page re-run.**
-
-If we **do not** `return` data from an form action the `load` function of the page will **NOT re-run**.
-
-So now that we do have a `load` function on the s`signup` page and inside it check if there is a valid `session` we can just `return` an empty object from the form action and thus make the `load` function of the `signup` page run and in consequence `redirect` the user to the `profile` page.
-
 <a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>
 
 **After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.**
@@ -1371,12 +1359,6 @@ import { Prisma } from '@prisma/client';
 
 import type { PageServerLoad } from './$types';
 
-// the return {}; at the end of the try block below makes the
-// load function for the signup page run once the form has been submitted
-// and redirect the user to the profile page if the session is valid
-//
-// if we omit the return {}; from the end of the try block the load function WILL NOT run
-// and the user will stay on the signup page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
@@ -1438,15 +1420,6 @@ export const actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
-
-			// THIS IS VERY IMPORTANT
-			// if we do not return any data from the form action
-			// the load function for this page will not re-run
-			// and thus not re-direct the authenticated user to the profile page
-			//
-			// for now we return the user in an object to the page to show the newly created user object
-			// in later lessons the just becomes return {};
-			return { user };
 		} catch (e) {
 			//
 			// Prisma error
@@ -1474,11 +1447,11 @@ export const actions = {
 				console.log(e);
 				return fail(500, { message: e });
 			}
-			// throw a SvelteKit redirect
-			// https://kit.svelte.dev/docs/load#redirects
-			// make sure you don't throw inside a try/catch block!
-			throw redirect(302, '/');
 		}
+		// throw a SvelteKit redirect if none of the error conditions apply
+		// https://kit.svelte.dev/docs/load#redirects
+		// make sure you don't throw inside a try/catch block!
+		throw redirect(302, '/');
 	}
 } satisfies Actions;
 ```
@@ -1642,7 +1615,8 @@ export const actions: Actions = {
 				message: 'An unknown error occurred'
 			});
 		}
-		// redirect to
+		// throw a SvelteKit redirect if none of the error conditions apply
+		// https://kit.svelte.dev/docs/load#redirects
 		// make sure you don't throw inside a try/catch block!
 		throw redirect(302, '/');
 	}
@@ -1695,12 +1669,6 @@ import { fail, redirect } from '@sveltejs/kit';
 
 import type { PageServerLoad } from './$types';
 
-// the return {}; at the end of the try block below makes the
-// load function for the login page run once the form has been submitted
-// and redirect the user to the profile page if the session is valid
-//
-// if we omit the return {}; from the end of the try block the load function WILL NOT run
-// and the user will stay on the login page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
@@ -1752,12 +1720,6 @@ export const actions: Actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
-
-			// THIS IS VERY IMPORTANT
-			// if we do not return any data from the form action
-			// the load function for this page will not re-run
-			// and thus not re-direct the authenticated user to the profile page
-			return {};
 		} catch (e) {
 			if (
 				e instanceof LuciaError &&
@@ -1772,7 +1734,8 @@ export const actions: Actions = {
 				message: 'An unknown error occurred'
 			});
 		}
-		// redirect to
+		// throw a SvelteKit redirect if none of the error conditions apply
+		// https://kit.svelte.dev/docs/load#redirects
 		// make sure you don't throw inside a try/catch block!
 		throw redirect(302, '/');
 	}
