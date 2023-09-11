@@ -1336,10 +1336,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
-	//
+
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
+	}
+	if (!session) {
+		// we redirect the user to the index page if the session is not valid
+		throw redirect(302, '/');
 	}
 	// since the load function needs to return data to the page we return an empty object
 	return {};
@@ -1349,6 +1353,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 <a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>
 
 **After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.**
+
+Since we now do have a `load` function for the `signup` page **WE WANT THE LOAD FUNCTION TO RUN** after the default form action. The page will only be re-rendered if there is no redirect, however we do have a redirect in place after the `try catch` block. Hence we now remove this `redirect` and thus enable the `load` function for the page to re-run after the form action. Note are also not returning the `user` object to the page `form` property any more.
 
 ```ts
 import { auth } from '$lib/server/lucia';
@@ -1420,6 +1426,9 @@ export const actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
+
+			// let's return the created user back to the sign up page for now
+			// return { user };
 		} catch (e) {
 			//
 			// Prisma error
@@ -1451,7 +1460,7 @@ export const actions = {
 		// throw a SvelteKit redirect if none of the error conditions apply
 		// https://kit.svelte.dev/docs/load#redirects
 		// make sure you don't throw inside a try/catch block!
-		throw redirect(302, '/');
+		// throw redirect(302, '/');
 	}
 } satisfies Actions;
 ```
@@ -1470,15 +1479,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
+
 	if (!session) {
 		// if the session is not valid we redirect the user back to the index page
 		throw redirect(302, '/');
 	}
 	// if the user session is validated we return the user data to the profile page
-	return {
-		userId: session.user.userId,
-		username: session.user.username
-	};
+	if (session) {
+		return {
+			userId: session.user.userId,
+			username: session.user.username
+		};
+	}
 };
 ```
 
@@ -1630,19 +1642,18 @@ If the username and password are correct and validated we should redirect the us
 ```ts
 import type { PageServerLoad } from './$types';
 
-// the return {}; at the end of the try block below makes the
-// load function for the login page run once the form has been submitted
-// and redirect the user to the profile page if the session is valid
-//
-// if we omit the return {}; from the end of the try block the load function WILL NOT run
-// and the user will stay on the login page
 export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
+
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
+	}
+	if (!session) {
+		// we redirect the user to the index page if the session is not valid
+		throw redirect(302, '/');
 	}
 	// since the load function needs to return data to the page we return an empty object
 	return {};
@@ -1651,13 +1662,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 The **src/routes/login/+page.server.ts** file now looks like this with the added `load` function to redirect to the `profile` page.
 
-Again there is one very important bit of code in the **src/routes/login/+page.server.ts** file as previously explained in <a href="https://github.com/robots4life/luscious-lucia#50-redirect-authenticated-users" target="_blank">https://github.com/robots4life/luscious-lucia#50-redirect-authenticated-users</a>.
-
-We `return` an empty object at the end of the try block in order to make the `load` function run once the form values have been submitted to the `login` form on the `login` page.
-
 <a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>
 
 **After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.**
+
+Since we now do have a `load` function for the `login` page **WE WANT THE LOAD FUNCTION TO RUN** after the default form action. The page will only be re-rendered if there is no redirect, however we do have a redirect in place after the `try catch` block. Hence we now remove this `redirect` and thus enable the `load` function for the page to re-run after the form action.
 
 **src/routes/login/+page.server.ts**
 
@@ -1673,9 +1682,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
+
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
+	}
+	if (!session) {
+		// we redirect the user to the index page if the session is not valid
+		throw redirect(302, '/');
 	}
 	// since the load function needs to return data to the page we return an empty object
 	return {};
@@ -1734,10 +1748,9 @@ export const actions: Actions = {
 				message: 'An unknown error occurred'
 			});
 		}
-		// throw a SvelteKit redirect if none of the error conditions apply
-		// https://kit.svelte.dev/docs/load#redirects
 		// make sure you don't throw inside a try/catch block!
-		throw redirect(302, '/');
+		// redirect to
+		// throw redirect(302, '/');
 	}
 };
 ```
@@ -1819,10 +1832,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/');
 	}
 	// if the user session is validated we return the user data to the profile page
-	return {
-		userId: session.user.userId,
-		username: session.user.username
-	};
+	if (session) {
+		return {
+			userId: session.user.userId,
+			username: session.user.username
+		};
+	}
 };
 
 export const actions: Actions = {

@@ -12,10 +12,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/');
 	}
 	// if the user session is validated we return the user data to the profile page
-	return {
-		userId: session.user.userId,
-		username: session.user.username
-	};
+	if (session) {
+		return {
+			userId: session.user.userId,
+			username: session.user.username
+		};
+	}
 };
 
 export const actions: Actions = {

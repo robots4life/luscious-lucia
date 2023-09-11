@@ -9,9 +9,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// call the validate() method to check for a valid session
 	// https://lucia-auth.com/reference/lucia/interfaces/authrequest#validate
 	const session = await locals.auth.validate();
+
 	if (session) {
 		// we redirect the user to the profile page if the session is valid
 		throw redirect(302, '/profile');
+	}
+	if (!session) {
+		// we redirect the user to the index page if the session is not valid
+		throw redirect(302, '/');
 	}
 	// since the load function needs to return data to the page we return an empty object
 	return {};

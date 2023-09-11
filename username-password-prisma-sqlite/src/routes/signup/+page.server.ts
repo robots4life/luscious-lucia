@@ -67,6 +67,9 @@ export const actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession
 			// store the session on the locals object and set session cookie
 			locals.auth.setSession(session);
+
+			// let's return the created user back to the sign up page for now
+			// return { user };
 		} catch (e) {
 			//
 			// Prisma error
@@ -95,9 +98,9 @@ export const actions = {
 				return fail(500, { message: e });
 			}
 		}
-		// make sure you don't throw inside a try/catch block!
-		// throw a SvelteKit redirect
+		// throw a SvelteKit redirect if none of the error conditions apply
 		// https://kit.svelte.dev/docs/load#redirects
+		// make sure you don't throw inside a try/catch block!
 		// throw redirect(302, '/');
 	}
 } satisfies Actions;
