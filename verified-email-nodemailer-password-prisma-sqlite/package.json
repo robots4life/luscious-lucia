@@ -1,5 +1,5 @@
 {
-	"name": "verified-email-node-mailer-password-prisma-sqlite",
+	"name": "verified-email-nodemailer-password-prisma-sqlite",
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
