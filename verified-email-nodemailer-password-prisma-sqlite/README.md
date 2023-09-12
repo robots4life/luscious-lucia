@@ -28,7 +28,7 @@ During development we are going to preview / check sent email with <a href="http
 
 Once everything works in development we are going to use a free <a href="https://sendgrid.com/pricing/" target="_blank">https://sendgrid.com/pricing/</a> SendGrid account that allows us to send up to 100 emails per day.
 
-### 1.1 Set up basic app styles, layout and email page with a SvelteKit named action
+### 1.1 Set up basic app styles, layout and email page with a SvelteKit default action
 
 Create an **app.css** file in the **src** folder with following contents.
 
@@ -157,11 +157,11 @@ In **src/routes/email** create a **+page.svelte** and a **+page.server.ts** file
 <hr />
 
 <h2>Send Test Email</h2>
-<form id="send_test_email" method="POST" action="?/send_test_email">
-	<label for="send-test-text">Text</label>
-	<input type="text" name="send-test-text" id="send-test-text" value="lorem ipsum email" />
-	<label for="send-test-number">Number</label>
-	<input type="number" name="send-test-number" id="send-test-number" value="123456789" />
+<form id="send_test_email" method="POST">
+	<label for="send_text">Text</label>
+	<input type="text" name="send_text" id="send_text" value="Lorem Ipsum Email Text" />
+	<label for="send_number">Number</label>
+	<input type="number" name="send_number" id="send_number" value="123456789" />
 	<button form="send_test_email" type="submit">Submit</button>
 </form>
 
@@ -177,7 +177,7 @@ In **src/routes/email** create a **+page.svelte** and a **+page.server.ts** file
 </style>
 ```
 
-<a href="https://kit.svelte.dev/docs/form-actions#named-actions" target="_blank">https://kit.svelte.dev/docs/form-actions#named-actions</a>
+<a href="https://kit.svelte.dev/docs/form-actions#default-actions" target="_blank">https://kit.svelte.dev/docs/form-actions#default-actions</a>
 
 **src/routes/email/+page.server.ts**
 
@@ -185,16 +185,14 @@ In **src/routes/email** create a **+page.svelte** and a **+page.server.ts** file
 import type { Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
-	send_test_email: async ({ request }) => {
-		const formData = await request.formData();
+	default: async ({ request }) => {
+		const form_data = await request.formData();
 
-		const formEntires = [];
-		for (const pair of formData.entries()) {
-			console.log(`${pair[0]} : ${pair[1]}`);
-			formEntires.push({ [pair[0]]: pair[1] });
-		}
+		const text = form_data.get('send_text');
+		console.log(text);
 
-		return { formEntires };
+		const number = form_data.get('send_number');
+		console.log(number);
 	}
 };
 ```
@@ -222,10 +220,12 @@ Go to the `email` page <a href="http://localhost:5173/email" target="_blank">htt
 Hit the `Submit` button on the form a few times, in your terminal you should see the following output.
 
 ```bash
-send-test-text : lorem ipsum email
-send-test-number : 123456789
-send-test-text : lorem ipsum email
-send-test-number : 123456789
+Lorem Ipsum Email Text
+123456789
+Lorem Ipsum Email Text
+123456789
+Lorem Ipsum Email Text
+123456789
 ```
 
 We have just set up basic app styles, a layout and an `email` page with a SvelteKit named form action. :tada:

@@ -1,15 +1,13 @@
 import type { Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
-	send_test_email: async ({ request }) => {
-		const formData = await request.formData();
+	default: async ({ request }) => {
+		const form_data = await request.formData();
 
-		const formEntires = [];
-		for (const pair of formData.entries()) {
-			console.log(`${pair[0]} : ${pair[1]}`);
-			formEntires.push({ [pair[0]]: pair[1] });
-		}
+		const text = form_data.get('send_text');
+		console.log(text);
 
-		return { formEntires };
+		const number = form_data.get('send_number');
+		console.log(number);
 	}
 };
