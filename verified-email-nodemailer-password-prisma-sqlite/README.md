@@ -20,4 +20,18 @@ alias px="pnpm dlx"
 
 ## Table of Contents
 
-## 1.0 Set up Nodemailer
+## 1.0 Set up Email
+
+For sending emails from our app we are going to use <a href="https://nodemailer.com/" target="_blank">https://nodemailer.com/</a>.
+
+During development we are going to preview / check sent email with <a href="https://ethereal.email/" target="_blank">https://ethereal.email/</a>.
+
+Once everything works in development we are going to use a free <a href="https://sendgrid.com/pricing/" target="_blank">https://sendgrid.com/pricing/</a> SendGrid account that allows us to send up to 100 emails per day.
+
+Last not least we are going to deploy our app to Vercel.
+
+### 1.1 Set up Nodemailer
+
+`pi nodemailer`
+
+`npm install nodemailer`
