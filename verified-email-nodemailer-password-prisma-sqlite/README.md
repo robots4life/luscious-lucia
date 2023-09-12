@@ -1,5 +1,7 @@
 <img src="/lucia.png">
 
+# Authentication with Email authenticated by verification link, Nodemailer, Password and Password Reset Link using SvelteKit, Lucia, Prisma and SQLite
+
 I am using `pnpm` and these aliases and oh my zsh.
 
 <a href="https://pnpm.io/" target="_blank">https://pnpm.io/</a>
