@@ -232,7 +232,7 @@ We have just set up basic app styles, a layout and an `email` page with a Svelte
 
 ### 1.2 Set up Nodemailer
 
-Install Nodemailer as dependencies.
+Install Nodemailer under dependencies.
 
 <a href="https://nodemailer.com/usage/" target="_blank">https://nodemailer.com/usage/</a>
 
@@ -251,7 +251,7 @@ dependencies:
 Done in 1.3s
 ```
 
-Install types for Nodemailer as devDependencies.
+Install types for Nodemailer under devDependencies.
 
 <a href="https://www.npmjs.com/package/@types/nodemailer" target="_blank">https://www.npmjs.com/package/@types/nodemailer</a>
 
