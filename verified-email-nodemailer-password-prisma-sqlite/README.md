@@ -255,6 +255,8 @@ Done in 1.3s
 
 Install types for Nodemailer as devDependencies.
 
+<a href="https://www.npmjs.com/package/@types/nodemailer" target="_blank">https://www.npmjs.com/package/@types/nodemailer</a>
+
 `npm install --save @types/nodemailer`
 
 `pa -D @types/nodemailer`
