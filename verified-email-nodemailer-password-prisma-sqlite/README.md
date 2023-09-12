@@ -113,6 +113,7 @@ select {
 /* https://andy-bell.co.uk/a-modern-css-reset/ END */
 
 html {
+	padding: 2rem;
 	background-color: #002244;
 	color: blanchedalmond;
 }
