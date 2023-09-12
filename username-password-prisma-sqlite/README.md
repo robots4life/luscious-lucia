@@ -1,5 +1,7 @@
 <img src="/lucia.png">
 
+# Authentication with Username and Password using SvelteKit, Lucia, Prisma and SQLite
+
 I am using `pnpm` and these aliases and oh my zsh.
 
 <a href="https://pnpm.io/" target="_blank">https://pnpm.io/</a>
