@@ -36,7 +36,7 @@ alias px="pnpm dlx"
 - [3.0 Create a Sign up page](#30-create-a-sign-up-page)
 - [4.0 Create users in the database](#40-create-users-in-the-database)
   - [4.1 Learn about SvelteKit form actions](#41-learn-about-sveltekit-form-actions)
-  - [4.2 Create a form action for the signup page](#42-create-a-form-action-for-the-sign-up-page)
+  - [4.2 Create a form action for the Sign up](#42-create-a-form-action-for-the-sign-up-page)
     - [4.2.1 Do a basic check for the received form values](#421-do-a-basic-check-for-the-received-form-values)
     - [4.2.2 Use `auth.createUser` from Lucia](#422-use--authcreateuser--from-lucia)
     - [4.2.3 Use `auth.createSession()` and `auth.setSession()` from Lucia](#423-use--authcreatesession----and--authsetsession----from-lucia)
