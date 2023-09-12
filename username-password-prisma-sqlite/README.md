@@ -1,4 +1,4 @@
-<img src="/username-password-prisma-sqlite/docs/lucia.png">
+<img src="/lucia.png">
 
 I am using `pnpm` and these aliases and oh my zsh.
 
