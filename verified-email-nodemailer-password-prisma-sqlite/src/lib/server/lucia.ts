@@ -18,7 +18,7 @@ export const auth = lucia({
 		return {
 			email: data.email,
 			// Boolean(data.email_verified) if stored as an integer
-			emailVerified: Boolean(data.emailVerified)
+			emailVerified: data.email_verified
 		};
 	}
 });

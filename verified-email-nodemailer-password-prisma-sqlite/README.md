@@ -545,10 +545,12 @@ datasource db {
 
 // https://lucia-auth.com/database-adapters/prisma#prisma-schema
 model User {
-  id           String       @id @unique
-  auth_session Session[]
-  key          Key[]
-  EmailToken   EmailToken[]
+  id             String       @id @unique
+  email          String       @unique // <== make sure to add email and
+  email_verified Boolean // <== email_verified as User attributes !!
+  auth_session   Session[]
+  key            Key[]
+  EmailToken     EmailToken[]
 }
 
 model Key {
@@ -609,26 +611,24 @@ Because the SQLite database file didn't exist before, the command also created i
 ```bash
 Packages: +2
 ++
-Progress: resolved 2, reused 0, downloaded 2, added 2, done
-../../../.pnpm-store/v3/tmp/dlx-29845/node_modules/.pnpm/@prisma+engines@5.3.0/node_modules/@prisma/engines: Running postinstall script, done in 1s
-../../../.pnpm-store/v3/tmp/dlx-29845/node_modules/.pnpm/prisma@5.3.0/node_modules/prisma: Running preinstall script, done in 66ms
+Progress: resolved 2, reused 2, downloaded 0, added 2, done
 Environment variables loaded from .env
 Prisma schema loaded from prisma/schema.prisma
 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
 
 SQLite database dev.db created at file:./dev.db
 
-Applying migration `20230913125227_init`
+Applying migration `20230913162923_init`
 
 The following migration(s) have been created and applied from new schema changes:
 
 migrations/
-  └─ 20230913125227_init/
+  └─ 20230913162923_init/
     └─ migration.sql
 
 Your database is now in sync with your schema.
 
-✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 106ms
+✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 123ms
 ```
 
 **.env**
@@ -722,7 +722,8 @@ export const auth = lucia({
 	getUserAttributes: (data) => {
 		return {
 			email: data.email,
-			emailVerified: data.email_verified // Boolean(data.email_verified)` if stored as an integer
+			// Boolean(data.email_verified) if stored as an integer
+			emailVerified: data.email_verified
 		};
 	}
 });
@@ -761,7 +762,7 @@ declare global {
 		type DatabaseUserAttributes = {
 			// required fields (i.e. id) should not be defined here
 			email: string;
-			emailVerified: boolean;
+			email_verified: boolean;
 		};
 		type DatabaseSessionAttributes = Record<string, never>;
 	}
@@ -1009,4 +1010,4 @@ export const actions: Actions = {
 };
 ```
 
-### 4.4 4Add new user to the database
+### 4.4 Add new user to the database

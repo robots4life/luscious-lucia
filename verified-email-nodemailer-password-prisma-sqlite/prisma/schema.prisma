@@ -12,10 +12,12 @@ datasource db {
 
 // https://lucia-auth.com/database-adapters/prisma#prisma-schema
 model User {
-  id           String       @id @unique
-  auth_session Session[]
-  key          Key[]
-  EmailToken   EmailToken[]
+  id             String       @id @unique
+  email          String       @unique // <== make sure to add email and
+  email_verified Boolean // <== email_verified as User attributes !!
+  auth_session   Session[]
+  key            Key[]
+  EmailToken     EmailToken[]
 }
 
 model Key {

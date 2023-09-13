@@ -20,7 +20,7 @@ declare global {
 		type DatabaseUserAttributes = {
 			// required fields (i.e. id) should not be defined here
 			email: string;
-			emailVerified: boolean;
+			email_verified: boolean;
 		};
 		type DatabaseSessionAttributes = Record<string, never>;
 	}

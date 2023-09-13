@@ -1,6 +1,7 @@
-import { fail } from '@sveltejs/kit';
 import type { Actions } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { isValidEmail } from '$lib/server/email';
+import { auth } from '$lib/server/lucia';
 
 export const actions: Actions = {
 	default: async ({ request }) => {
@@ -24,7 +25,25 @@ export const actions: Actions = {
 			});
 		}
 
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+			// for now log the created user
+			console.log(user);
+		} catch (error) {
+			console.log(error);
+		}
+
 		// for now you return the received form values back to the signup page
 		return { timestamp: new Date(), email, password };
 	}
-};
+} satisfies Actions;
