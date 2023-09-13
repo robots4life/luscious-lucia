@@ -430,3 +430,10 @@ On the `email` page you should also see the returned `info` object from the form
   "messageId": "<0071024c-878f-3c88-afba-939e73e96eec@ethereal.email>"
 }
 ```
+
+Well done, you
+
+- set up `nodemailer`
+- and use an Ethereal email test account
+- to send emails
+- using form data from your `email` page. :tada:
