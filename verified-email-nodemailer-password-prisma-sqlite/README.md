@@ -22,11 +22,11 @@ alias px="pnpm dlx"
 
 ## 1.0 Set up Email
 
-For sending emails from our app we are going to use <a href="https://nodemailer.com/" target="_blank">https://nodemailer.com/</a>.
+For sending emails from our app you are going to use <a href="https://nodemailer.com/" target="_blank">https://nodemailer.com/</a>.
 
-During development we are going to preview / check sent email with <a href="https://ethereal.email/" target="_blank">https://ethereal.email/</a>.
+During development you are going to preview / check sent email with <a href="https://ethereal.email/" target="_blank">https://ethereal.email/</a>.
 
-Once everything works in development we are going to use a free <a href="https://sendgrid.com/pricing/" target="_blank">https://sendgrid.com/pricing/</a> SendGrid account that allows us to send up to 100 emails per day.
+Once everything works in development you are going to use a free <a href="https://sendgrid.com/pricing/" target="_blank">https://sendgrid.com/pricing/</a> SendGrid account that allows us to send up to 100 emails per day.
 
 ### 1.1 Set up basic app styles, layout and email page with a SvelteKit default form action
 
@@ -113,9 +113,12 @@ select {
 /* https://andy-bell.co.uk/a-modern-css-reset/ END */
 
 html {
-	padding: 2rem;
 	background-color: #002244;
 	color: blanchedalmond;
+}
+
+body {
+	padding: 2rem;
 }
 
 body,
@@ -239,7 +242,7 @@ Lorem Ipsum Email Text
 123456789
 ```
 
-We have just set up basic app styles, a layout and an `email` page with a SvelteKit named form action. :tada:
+Well done, you have just set up basic app styles, a layout and an `email` page with a SvelteKit named form action. :tada:
 
 ### 1.2 Install Nodemailer and types for Nodemailer
 
@@ -295,7 +298,7 @@ You will be redirected to <a href="https://ethereal.email/create" target="_blank
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_account_details.png">
 
-We are interested in the `Nodemailer configuration`.
+You are interested in the `Nodemailer configuration`.
 
 ```ts
 const transporter = nodemailer.createTransport({
@@ -314,7 +317,7 @@ Nodemailer has a nice example of how to send email.
 
 <a href="https://nodemailer.com/about/#example" target="_blank">https://nodemailer.com/about/#example</a>
 
-We are going to use that in the `+page.server.ts` file of the `email` page.
+You are going to use that in the `+page.server.ts` file of the `email` page.
 
 **src/routes/email/+page.server.ts**
 
@@ -440,7 +443,7 @@ Well done, you
 
 ## 2.0 Set up Prisma
 
-We are going to use Prisma with an SQLite database with SvelteKit.
+You are going to use Prisma with an SQLite database with SvelteKit.
 
 ### 2.1 Add Prisma extension to VS Code
 
@@ -523,7 +526,7 @@ The default Prisma schema for Lucia has a `User`, `Key` and `Session` model.
 
 <a href="https://lucia-auth.com/database-adapters/prisma#prisma-schema" target="_blank">https://lucia-auth.com/database-adapters/prisma#prisma-schema</a>
 
-For email verification we need a new Model `EmailToken`.
+For email verification you need a new Model `EmailToken`.
 
 **prisma/schema.prisma**
 
@@ -577,9 +580,74 @@ model EmailToken {
 }
 ```
 
+### 2.5 Generate SQLite database with Prisma Schema
+
+Now it is time to generate the SQLite database according to the Prisma Schema.
+
+<a href="https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate" target="_blank">https://www.prisma.io/docs/getting-started/quickstart#3-run-a-migration-to-create-your-database-tables-with-prisma-migrate</a>
+
+Run the following command in your terminal to create the SQLite database and the
+
+- **User**
+- **Key**
+- **Session**
+- and **EmailToken**
+
+**tables** represented by your **models** defined in in your **Prisma Schema**.
+
+`npx prisma migrate dev --name init`
+
+`px prisma migrate dev --name init`
+
+This command does two things.
+
+1. It creates a new SQL migration file for this migration in the prisma/migrations directory.
+2. It runs the SQL migration file against the database.
+
+Because the SQLite database file didn't exist before, the command also created it inside the prisma directory with the name `dev.db` as defined via the environment variable in the `.env` file.
+
+```bash
+Packages: +2
+++
+Progress: resolved 2, reused 0, downloaded 2, added 2, done
+../../../.pnpm-store/v3/tmp/dlx-29845/node_modules/.pnpm/@prisma+engines@5.3.0/node_modules/@prisma/engines: Running postinstall script, done in 1s
+../../../.pnpm-store/v3/tmp/dlx-29845/node_modules/.pnpm/prisma@5.3.0/node_modules/prisma: Running preinstall script, done in 66ms
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+
+SQLite database dev.db created at file:./dev.db
+
+Applying migration `20230913125227_init`
+
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20230913125227_init/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+
+✔ Generated Prisma Client (v5.2.0) to ./node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client in 106ms
+```
+
+**.env**
+
+```bash
+# Environment variables declared in this file are automatically made available to Prisma.
+# See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
+
+# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
+# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+
+DATABASE_URL="file:./dev.db"
+```
+
+Well done, you have set up Prisma and a SQLite database for your app. :tada:
+
 ## 3.0 Add Lucia to SvelteKit
 
-We are going to use Lucia for authentication.
+You are going to use Lucia for authentication.
 
 <a href="https://lucia-auth.com/" target="_blank">https://lucia-auth.com/</a>
 
@@ -725,8 +793,109 @@ import { auth } from '$lib/server/lucia';
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// we can pass `event` because we used the SvelteKit middleware
+	// you can pass `event` because you used the SvelteKit middleware
 	event.locals.auth = auth.handleRequest(event);
 	return await resolve(event);
 };
+```
+
+## 4.0 Create users in the database
+
+Before you create or validate tokens you need to create a `signup` page with a form that will allow new users to sign up / register to your app.
+
+### 4.1 Create a Sign up page
+
+Create a `+page.svelte` file in the folder `src/routes/signup`.
+
+**src/routes/signup/+page.svelte**
+
+```html
+<script lang="ts">
+	// export the form property on this page
+	// to show the return value of the form action on the page
+	import type { ActionData } from './$types';
+	export let form: ActionData;
+</script>
+
+<a href="/">Home</a>
+
+<hr />
+<h1>Sign Up</h1>
+<hr />
+
+<h2>Sign Up With Email</h2>
+<form id="sign_up_with_email" method="POST">
+	<label for="send_email">Email</label>
+	<input type="text" name="send_email" id="send_email" value="conner.white16@ethereal.email" />
+	<label for="send_password">Password</label>
+	<input type="password" name="send_password" id="send_password" value="0123456789876543210" />
+	<button form="sign_up_with_email" type="submit">Submit</button>
+</form>
+
+<!-- show the return value from the form action -->
+<pre>{JSON.stringify(form, null, 2)}</pre>
+
+<style>
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	button {
+		border-radius: 10px;
+	}
+</style>
+```
+
+Create a link to the `signup` page on the index page of your app.
+
+**src/routes/+page.svelte**
+
+```html
+<a href="/email">Send Test Email</a>
+<a href="/signup">Sign Up With Email</a>
+<hr />
+
+<h1>Welcome to SvelteKit</h1>
+<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+```
+
+### 4.1 Create a SvelteKit default form action for the Sign Up page
+
+Create a `+page.server.ts` file in the folder `src/routes/signup`.
+
+<a href="https://kit.svelte.dev/docs/form-actions" target="_blank">https://kit.svelte.dev/docs/form-actions</a>
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+
+export const actions: Actions = {
+	default: async ({ request }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// for now you return the received form values back to the signup page
+		return { timestamp: new Date(), email, password };
+	}
+};
+```
+
+On the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> hit the submit button a few times.
+
+You should have output similar to this in your terminal.
+
+Your Ethereal email address obviously will be a the one you created in <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#13-create-an-ethereal-email-test-account" target="_blank">**1.3 Create an Ethereal email test account**</a>.
+
+```bash
+conner.white16@ethereal.email
+0123456789876543210
+conner.white16@ethereal.email
+0123456789876543210
 ```
