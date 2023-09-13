@@ -151,6 +151,13 @@ In **src/routes/email** create a **+page.svelte** and a **+page.server.ts** file
 **src/routes/email/+page.svelte**
 
 ```html
+<script lang="ts">
+	// export the form property on this page
+	// to show the return value of the form action on the page
+	import type { ActionData } from './$types';
+	export let form: ActionData;
+</script>
+
 <a href="/">Home</a>
 
 <hr />
@@ -165,6 +172,9 @@ In **src/routes/email** create a **+page.svelte** and a **+page.server.ts** file
 	<input type="number" name="send_number" id="send_number" value="123456789" />
 	<button form="send_test_email" type="submit">Submit</button>
 </form>
+
+<!-- show the return value from the form action -->
+<pre>{JSON.stringify(form, null, 2)}</pre>
 
 <style>
 	form {
@@ -269,4 +279,154 @@ devDependencies:
 + @types/nodemailer 6.4.10
 
 Done in 1s
+```
+
+### 1.3 Set up Ethereal email test account
+
+Ethereal is a fake SMTP service. It's a completely free email service where messages you send during development can be easily previewed.
+
+Go to <a href="https://ethereal.email/" target="_blank">https://ethereal.email/</a>.
+
+Click on the blue `Create Etheral Account` button.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/create_ethereal_account.png">
+
+You will be redirected to <a href="https://ethereal.email/create" target="_blank">https://ethereal.email/create</a> and see your Etheral account details.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_account_details.png">
+
+We are interested in the `Nodemailer configuration`.
+
+```ts
+const transporter = nodemailer.createTransport({
+	host: 'smtp.ethereal.email',
+	port: 587,
+	auth: {
+		user: 'conner.white16@ethereal.email',
+		pass: 'MvPJdfrde3Uz8zewR6'
+	}
+});
+```
+
+### 1.4 Send verification email with Nodemailer to your Ethereal email test account
+
+Nodemailer has a nice example of how to send email.
+
+<a href="https://nodemailer.com/about/#example" target="_blank">https://nodemailer.com/about/#example</a>
+
+We are going to use that in the `+page.server.ts` file of the `email` page.
+
+**src/routes/email/+page.server.ts**
+
+```ts
+import nodemailer from 'nodemailer';
+
+// define the Nodemailer transporter with the Ethereal account details
+const transporter = nodemailer.createTransport({
+	host: 'smtp.ethereal.email',
+	port: 587,
+	auth: {
+		user: 'conner.white16@ethereal.email',
+		pass: 'MvPJdfrde3Uz8zewR6'
+	}
+});
+
+// define a sendVerificationMessage function with parameters for the message
+async function sendVerificationMessage(to: string, subject: string, text: string, html = '') {
+	try {
+		const info = await transporter.sendMail({
+			from: 'conner.white16@ethereal.email', // sender address
+			to: to, // list of receivers
+			subject: subject, // Subject line
+			text: text, // plain text body
+			html: html // html body
+		});
+		console.log('Message sent: %s', info.messageId);
+		//
+		// return the info object after sending the message
+		return info;
+	} catch (error) {
+		console.log(error);
+	}
+}
+
+import type { Actions } from '@sveltejs/kit';
+
+export const actions: Actions = {
+	default: async ({ request }) => {
+		const form_data = await request.formData();
+
+		const text = form_data.get('send_text');
+		console.log(text);
+
+		const number = form_data.get('send_number');
+		console.log(number);
+
+		// call the sendVerificationMessage function and pass the message arguments
+		if (typeof text === 'string' && typeof number === 'string') {
+			//
+			// const info will hold the return value of the above return info
+			const info = sendVerificationMessage(
+				'conner.white16@ethereal.email',
+				'Email Verification',
+				text + number
+			);
+			// return the info object to the email page
+			return info;
+		}
+	}
+};
+```
+
+Go to the `email` page <a href="http://localhost:5173/email" target="_blank">http://localhost:5173/email</a>, the form values should already be given, `Lorem Ipsum Email Text` and `123456789`.
+
+Submit the `form` and check your terminal.
+
+```bash
+VITE v4.4.9  ready in 907 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+Lorem Ipsum Email Text
+123456789
+Message sent: <565d5b32-97ef-2f7d-1bea-f278310bfc0c@ethereal.email>
+```
+
+Go to <a href="https://ethereal.email/messages" target="_blank">https://ethereal.email/messages</a> and find the email message you just sent.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_message.png">
+
+Click on the message subject to see the message details.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_message_details.png">
+
+On the `email` page you should also see the returned `info` object from the form action.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite//docs/ethereal_message_info_object_email_page.png">
+
+```ts
+{
+  "accepted": [
+    "conner.white16@ethereal.email"
+  ],
+  "rejected": [],
+  "ehlo": [
+    "PIPELINING",
+    "8BITMIME",
+    "SMTPUTF8",
+    "AUTH LOGIN PLAIN"
+  ],
+  "envelopeTime": 124,
+  "messageTime": 146,
+  "messageSize": 338,
+  "response": "250 Accepted [STATUS=new MSGID=ZQFaVM2l51sVUMSAZQFvz.NxowjZr8xpAAAAEHlXMIYgvu333s427ccaSNs]",
+  "envelope": {
+    "from": "conner.white16@ethereal.email",
+    "to": [
+      "conner.white16@ethereal.email"
+    ]
+  },
+  "messageId": "<0071024c-878f-3c88-afba-939e73e96eec@ethereal.email>"
+}
 ```
