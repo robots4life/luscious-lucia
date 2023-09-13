@@ -957,4 +957,56 @@ export const actions: Actions = {
 };
 ```
 
-### 4.3 Add new user to the database
+### 4.3 Turn `isValidEmail` function into a module
+
+Instead of having the `isValidEmail` function in the **src/routes/signup/+page.server.ts** file we can make a module out of it and hence make it available all over our codebase by just importing it.
+
+Create a new file `email.ts` in the folder `src/lib/server`.
+
+**src/lib/server/email.ts**
+
+```ts
+export const isValidEmail = (maybeEmail: unknown): maybeEmail is string => {
+	if (typeof maybeEmail !== 'string') return false;
+	if (maybeEmail.length > 255) return false;
+	const emailRegexp = /^.+@.+$/; // [one or more character]@[one or more character]
+	return emailRegexp.test(maybeEmail);
+};
+```
+
+In the **src/routes/signup/+page.server.ts** now remove the `isValidEmail` function and import it from the module.
+
+```ts
+import { fail } from '@sveltejs/kit';
+import type { Actions } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/email';
+
+export const actions: Actions = {
+	default: async ({ request }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		// for now you return the received form values back to the signup page
+		return { timestamp: new Date(), email, password };
+	}
+};
+```
+
+### 4.4 4Add new user to the database
