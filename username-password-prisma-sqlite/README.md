@@ -119,7 +119,7 @@ Extension id `Prisma.prisma`
 
 <a href="https://marketplace.visualstudio.com/items?itemName=Prisma.prisma" target="_blank">https://marketplace.visualstudio.com/items?itemName=Prisma.prisma</a>
 
-Add the settings for the Prisma extension in your `settings.json`.
+Add these settings for the Prisma extension in your `settings.json`. This formats your `schema.prisma` file on save.
 
 ```json
 "[prisma]": {

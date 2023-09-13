@@ -1,6 +1,6 @@
 <img src="/lucia.png">
 
-# Authentication with Email authenticated by verification link, Nodemailer, Password and Password Reset Link using SvelteKit, Lucia, Prisma and SQLite
+# Authentication with Email, authenticated by verification link, Nodemailer, Password and Password Reset Link using SvelteKit, Lucia, Prisma and SQLite
 
 I am using `pnpm` and these aliases and oh my zsh.
 
@@ -20,7 +20,7 @@ alias px="pnpm dlx"
 
 ## Table of Contents
 
-## 1.0 Email workflow
+## 1.0 Set up Email
 
 For sending emails from our app we are going to use <a href="https://nodemailer.com/" target="_blank">https://nodemailer.com/</a>.
 
@@ -28,7 +28,7 @@ During development we are going to preview / check sent email with <a href="http
 
 Once everything works in development we are going to use a free <a href="https://sendgrid.com/pricing/" target="_blank">https://sendgrid.com/pricing/</a> SendGrid account that allows us to send up to 100 emails per day.
 
-### 1.1 Set up basic app styles, layout and email page with a SvelteKit default action
+### 1.1 Set up basic app styles, layout and email page with a SvelteKit default form action
 
 Create an **app.css** file in the **src** folder with following contents.
 
@@ -241,9 +241,9 @@ Lorem Ipsum Email Text
 
 We have just set up basic app styles, a layout and an `email` page with a SvelteKit named form action. :tada:
 
-### 1.2 Set up Nodemailer
+### 1.2 Install Nodemailer and types for Nodemailer
 
-Install Nodemailer under dependencies.
+Install Nodemailer as a dependency.
 
 <a href="https://nodemailer.com/usage/" target="_blank">https://nodemailer.com/usage/</a>
 
@@ -262,7 +262,7 @@ dependencies:
 Done in 1.3s
 ```
 
-Install types for Nodemailer under devDependencies.
+Install types for Nodemailer as a development dependency.
 
 <a href="https://www.npmjs.com/package/@types/nodemailer" target="_blank">https://www.npmjs.com/package/@types/nodemailer</a>
 
@@ -281,7 +281,7 @@ devDependencies:
 Done in 1s
 ```
 
-### 1.3 Set up Ethereal email test account
+### 1.3 Create an Ethereal email test account
 
 Ethereal is a fake SMTP service. It's a completely free email service where messages you send during development can be easily previewed.
 
@@ -437,3 +437,296 @@ Well done, you
 - and use an Ethereal email test account
 - to send emails
 - using form data from your `email` page. :tada:
+
+## 2.0 Set up Prisma
+
+We are going to use Prisma with an SQLite database with SvelteKit.
+
+### 2.1 Add Prisma extension to VS Code
+
+Add the Prisma extension to VS Code.
+
+Extension id `Prisma.prisma`
+
+<a href="https://marketplace.visualstudio.com/items?itemName=Prisma.prisma" target="_blank">https://marketplace.visualstudio.com/items?itemName=Prisma.prisma</a>
+
+Add these settings for the Prisma extension in your `settings.json`. This formats your `schema.prisma` file on save.
+
+```json
+"[prisma]": {
+  "editor.defaultFormatter": "Prisma.prisma",
+  "editor.formatOnSave": true
+},
+```
+
+### 2.2. Install Prisma CLI
+
+Install the Prisma CLI as a development dependency in the project.
+
+<a href="https://www.prisma.io/docs/reference/api-reference/command-reference#installation" target="_blank">https://www.prisma.io/docs/reference/api-reference/command-reference#installation</a>
+
+<a href="https://pnpm.io/cli/install#--dev--d" target="_blank">https://pnpm.io/cli/install#--dev--d</a>
+
+<a href="https://www.prisma.io/docs/reference/api-reference/command-reference#pnpm" target="_blank">https://www.prisma.io/docs/reference/api-reference/command-reference#pnpm</a>
+
+`npm install prisma --save-dev`
+
+`pi prisma -D`
+
+```bash
+Packages: +2
+++
+Progress: resolved 248, reused 226, downloaded 0, added 2, done
+
+devDependencies:
++ prisma 5.2.0
+
+Done in 2.5s
+```
+
+### 2.3 Set up Prisma with SQLite database
+
+Set up Prisma with the `init` command of the Prisma CLI and choose `sqlite` as database.
+
+<a href="https://www.prisma.io/docs/reference/api-reference/command-reference#usage" target="_blank">https://www.prisma.io/docs/reference/api-reference/command-reference#usage</a>
+
+If you installed Prisma as a development dependency, you need to prefix the `prisma` command with your package runner.
+
+<a href="https://www.prisma.io/docs/reference/api-reference/command-reference#run-prisma-init---datasource-provider-sqlite" target="_blank">https://www.prisma.io/docs/reference/api-reference/command-reference#run-prisma-init---datasource-provider-sqlite</a>
+
+`npx prisma init --datasource-provider sqlite`
+
+`px prisma init --datasource-provider sqlite`
+
+```bash
+Packages: +2
+++
+Progress: resolved 2, reused 2, downloaded 0, added 2, done
+
+✔ Your Prisma schema was created at prisma/schema.prisma
+  You can now open it in your favorite editor.
+
+warn You already have a .gitignore file. Don't forget to add `.env` in it to not commit any private information.
+
+Next steps:
+1. Set the DATABASE_URL in the .env file to point to your existing database. If your database has no tables yet, read https://pris.ly/d/getting-started
+2. Run prisma db pull to turn your database schema into a Prisma schema.
+3. Run prisma generate to generate the Prisma Client. You can then start querying your database.
+
+More information in our documentation:
+https://pris.ly/d/getting-started`
+```
+
+### 2.4 Set up Prisma Schema for email verification
+
+The default Prisma schema for Lucia has a `User`, `Key` and `Session` model.
+
+<a href="https://lucia-auth.com/database-adapters/prisma#prisma-schema" target="_blank">https://lucia-auth.com/database-adapters/prisma#prisma-schema</a>
+
+For email verification we need a new Model `EmailToken`.
+
+**prisma/schema.prisma**
+
+```prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// https://lucia-auth.com/database-adapters/prisma#prisma-schema
+model User {
+  id           String       @id @unique
+  auth_session Session[]
+  key          Key[]
+  EmailToken   EmailToken[]
+}
+
+model Key {
+  id              String  @id @unique
+  hashed_password String?
+  user_id         String
+  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Session {
+  id             String @id @unique
+  user_id        String
+  active_expires BigInt
+  idle_expires   BigInt
+  user           User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model EmailToken {
+  id      String @id @unique
+  expires BigInt
+  user_id String
+  user    User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+```
+
+## 3.0 Add Lucia to SvelteKit
+
+We are going to use Lucia for authentication.
+
+<a href="https://lucia-auth.com/" target="_blank">https://lucia-auth.com/</a>
+
+### 3.1 Install Lucia and install Adapter Prisma for Lucia
+
+<a href="https://lucia-auth.com/getting-started/sveltekit" target="_blank">https://lucia-auth.com/getting-started/sveltekit</a>
+
+`npm install lucia`
+
+`pa lucia`
+
+```bash
+Packages: +1
++
+Progress: resolved 249, reused 227, downloaded 0, added 1, done
+
+dependencies:
++ lucia 2.5.0
+
+Done in 1.6s
+```
+
+<a href="https://lucia-auth.com/database-adapters/prisma#installation" target="_blank">https://lucia-auth.com/database-adapters/prisma#installation</a>
+
+`npm i @lucia-auth/adapter-prisma`
+
+`pa @lucia-auth/adapter-prisma`
+
+```bash
+Packages: +3
++++
+Progress: resolved 252, reused 228, downloaded 2, added 3, done
+node_modules/.pnpm/@prisma+client@5.3.0_prisma@5.2.0/node_modules/@prisma/client: Running postinstall script, done in 2.8s
+
+dependencies:
++ @lucia-auth/adapter-prisma 3.0.1
+
+Done in 6.1s
+```
+
+### 3.2 Initialize Lucia
+
+<a href="https://lucia-auth.com/getting-started/sveltekit#initialize-lucia" target="_blank">https://lucia-auth.com/getting-started/sveltekit#initialize-lucia</a>
+
+Import `lucia()` from `lucia` and initialize it in its own module (file). Export `auth` and its type as `Auth`. Make sure to pass the `sveltekit()` middleware.
+
+Create a new file `lucia.ts` in the folder `src/lib/server`.
+
+We’ll expose the user’s `email` and `emailVerified` to the `User` object by defining `getUserAttributes`.
+
+<a href="https://lucia-auth.com/basics/configuration#getuserattributes" target="_blank">https://lucia-auth.com/basics/configuration#getuserattributes</a>
+
+**src/lib/server/lucia.ts**
+
+```ts
+import { lucia } from 'lucia';
+import { sveltekit } from 'lucia/middleware';
+import { dev } from '$app/environment';
+import { prisma } from '@lucia-auth/adapter-prisma';
+import { PrismaClient } from '@prisma/client';
+
+const client = new PrismaClient();
+
+export const auth = lucia({
+	env: dev ? 'DEV' : 'PROD',
+	middleware: sveltekit(),
+	adapter: prisma(client, {
+		user: 'user', // model User {}
+		key: 'key', // model Key {}
+		session: 'session' // model Session {}
+	}),
+	getUserAttributes: (data) => {
+		return {
+			email: data.email,
+			emailVerified: data.email_verified // Boolean(data.email_verified)` if stored as an integer
+		};
+	}
+});
+
+export type Auth = typeof auth;
+```
+
+### 3.3. Set up types for Lucia
+
+<a href="https://lucia-auth.com/getting-started/sveltekit#set-up-types" target="_blank">https://lucia-auth.com/getting-started/sveltekit#set-up-types</a>
+
+In your `src/app.d.ts` file, declare a `Lucia` namespace. The import path for `Auth` is where you initialized `lucia()`.
+
+**src/app.d.ts**
+
+```ts
+// See https://kit.svelte.dev/docs/types#app
+// for information about these interfaces
+
+// https://lucia-auth.com/getting-started/sveltekit#set-up-types
+declare global {
+	namespace App {
+		// interface Error {}
+		interface Locals {
+			auth: import('lucia').AuthRequest;
+		}
+		// interface PageData {}
+		// interface Platform {}
+	}
+}
+
+/// <reference types="lucia" />
+declare global {
+	namespace Lucia {
+		type Auth = import('$lib/server/lucia').Auth;
+		type DatabaseUserAttributes = {
+			// required fields (i.e. id) should not be defined here
+			email: string;
+			emailVerified: boolean;
+		};
+		type DatabaseSessionAttributes = {};
+	}
+}
+
+export {};
+```
+
+### 3.4 Set up hooks to store `Auth.request()` on the `locals.auth` object
+
+<a href="https://lucia-auth.com/getting-started/sveltekit#set-up-hooks" target="_blank">https://lucia-auth.com/getting-started/sveltekit#set-up-hooks</a>
+
+**This is optional but highly recommended**.
+
+<a href="https://kit.svelte.dev/docs/hooks#server-hooks-handle" target="_blank">https://kit.svelte.dev/docs/hooks#server-hooks-handle</a>
+
+Create a new `handle()` hook that stores `AuthRequest` to `locals.auth`.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/authrequest" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/authrequest</a>
+
+`locals.auth` will store the `Auth.request()` methods `setSession()`, `validate()` and `validateBearerToken()`.
+
+Create a new file `hooks.server.ts` in the `src` folder. Note, there is no `+` in front of the file name !
+
+**src/hooks.server.ts**
+
+```ts
+import { auth } from '$lib/server/lucia';
+import type { Handle } from '@sveltejs/kit';
+
+export const handle: Handle = async ({ event, resolve }) => {
+	// we can pass `event` because we used the SvelteKit middleware
+	event.locals.auth = auth.handleRequest(event);
+	return await resolve(event);
+};
+```
