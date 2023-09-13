@@ -862,6 +862,10 @@ Create a link to the `signup` page on the index page of your app.
 
 ### 4.1 Create a SvelteKit default form action for the Sign Up page
 
+In the next steps you are going to add the code needed to create a new user in the database
+
+All of this is done server-side in the **src/routes/signup/+page.server.ts** file.
+
 Create a `+page.server.ts` file in the folder `src/routes/signup`.
 
 <a href="https://kit.svelte.dev/docs/form-actions" target="_blank">https://kit.svelte.dev/docs/form-actions</a>
@@ -899,3 +903,58 @@ conner.white16@ethereal.email
 conner.white16@ethereal.email
 0123456789876543210
 ```
+
+#### 4.2 Do a basic check with the received form values
+
+If the request couldn't be processed because of invalid data, you can return validation errors - along with the previously submitted form values - back to the user so that they can try again.
+
+The `fail` function lets you return an HTTP status code (typically `400` or `422`, in the case of validation errors) along with the data.
+
+<a href="https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors" target="_blank">https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors</a>
+
+For validating an email address to have the correct format (not if it is valid or not!) have a look at this info.
+
+<a href="https://lucia-auth.com/guidebook/email-verification-links/sveltekit#validating-emails" target="_blank">https://lucia-auth.com/guidebook/email-verification-links/sveltekit#validating-emails</a>
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import { fail } from '@sveltejs/kit';
+import type { Actions } from '@sveltejs/kit';
+
+const isValidEmail = (maybeEmail: unknown): maybeEmail is string => {
+	if (typeof maybeEmail !== 'string') return false;
+	if (maybeEmail.length > 255) return false;
+	const emailRegexp = /^.+@.+$/; // [one or more character]@[one or more character]
+	return emailRegexp.test(maybeEmail);
+};
+
+export const actions: Actions = {
+	default: async ({ request }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		// for now you return the received form values back to the signup page
+		return { timestamp: new Date(), email, password };
+	}
+};
+```
+
+### 4.3 Add new user to the database

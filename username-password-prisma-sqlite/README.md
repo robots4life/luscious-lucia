@@ -597,7 +597,7 @@ username : Jane
 password : icecream
 ```
 
-#### 4.2.1 Do a basic check for the received form values
+#### 4.2.1 Do a basic check with the received form values
 
 <a href="https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors" target="_blank">https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors</a>
 
