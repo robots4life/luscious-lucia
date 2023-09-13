@@ -22,7 +22,7 @@ declare global {
 			email: string;
 			emailVerified: boolean;
 		};
-		type DatabaseSessionAttributes = {};
+		type DatabaseSessionAttributes = Record<string, never>;
 	}
 }
 

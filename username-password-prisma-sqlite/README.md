@@ -384,7 +384,7 @@ declare global {
 			// required fields (i.e. id) should not be defined here
 			username: string;		<== add the username type to the DatabaseUserAttributes type
 		};
-		type DatabaseSessionAttributes = {};
+		type DatabaseSessionAttributes = Record<string, never>;
 	}
 }
 
