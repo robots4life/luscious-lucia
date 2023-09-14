@@ -4,7 +4,7 @@ import { isValidEmail } from '$lib/server/email';
 import { auth } from '$lib/server/lucia';
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, locals }) => {
 		const form_data = await request.formData();
 
 		const email = form_data.get('send_email');
@@ -37,6 +37,13 @@ export const actions: Actions = {
 					email_verified: false // `Number(false)` if stored as an integer
 				}
 			});
+
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			locals.auth.setSession(session); // set session cookie
+
 			// for now log the created user
 			console.log(user);
 		} catch (error) {

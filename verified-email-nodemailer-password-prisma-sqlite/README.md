@@ -800,7 +800,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 ```
 
-## 4.0 Create users in the database
+## 4.0 Create a User in the database
 
 Before you create or validate tokens you need to create a `signup` page with a form that will allow new users to sign up / register to your app.
 
@@ -1024,7 +1024,7 @@ export const actions: Actions = {
 };
 ```
 
-### 4.4 Add new user to the database
+### 4.4 Add a new User to the database
 
 After you have done a basic check with the received form values you can create a new user.
 
@@ -1235,3 +1235,136 @@ You should see the `User` **id**, **email** and **email_verified** table for the
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_ new_user_details.png">
 
 Well done, you just created a new user in your database. :tada:
+
+### 4.5 Create a new Session for the new User
+
+After successfully creating a new user, you will now create a new session with `Auth.createSession()` and store it in a cookie with `AuthRequest.setSession()`.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/authrequest#setsession</a>
+
+Sessions can be created with `Auth.createSession()` and can be stored in a cookie.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth#createsession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth#createsession</a>
+
+```ts
+const session = await auth.createSession({
+	userId: user.userId,
+	attributes: {}
+});
+locals.auth.setSession(session); // set session cookie
+```
+
+Note that you are accessing the `locals` object where you stored the `auth` methods when creating the `hooks.server.ts` file in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#34-set-up-hooks-to-store-authrequest-on-the-localsauth-object" target="_blank">**3.4 Set up hooks to store Auth.request() on the locals.auth object**</a>.
+
+So to be able to access the `locals` object you need to add it as argument to the default form action function.
+
+```ts
+default: async ({ request, locals }) =>
+```
+
+This is what your `+page.server.ts` should look like now.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/email';
+import { auth } from '$lib/server/lucia';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// for now log the created user
+			console.log(user);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// for now you return the received form values back to the signup page
+		return { timestamp: new Date(), email, password };
+	}
+} satisfies Actions;
+```
+
+Go to Prisma Studio and now delete the newly created user.
+
+<a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>
+
+Select the row with the user and hit `Delete 1 record`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_delete_new_user.png">
+
+Confirm to delete the record.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_confirm_delete_record.png">
+
+After you have deleted the record to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form again.
+
+Again, in your terminal you should have output similar to this, obviously your Ethereal email address will be different.
+
+```bash
+conner.white16@ethereal.email
+0123456789876543210
+{
+  email: 'conner.white16@ethereal.email',
+  emailVerified: false,
+  userId: 'fyqw1z4ejl5xbco'
+}
+```
+
+Again, go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>.
+
+You should now see a new `User`, `Key` **and** `Session`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_user_new_session.png">
+
+Click on `Session` to see the newly created `Session` for the user.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_session_details.png">
+
+Open your Development Tools in the browser, I am using Chrome.
+
+Check out the `Application` tab and select `Storage -> Cookies`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/chrome_dev_tools_application_storage_cookies.png">
+
+Well done, you created a new `User` and a new `Session` in your database and created a `session cookie` in your app. :tada:
