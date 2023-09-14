@@ -1195,7 +1195,7 @@ Start Prisma Studio with this command.
 
 Now go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
 
-In your terminal you should have output similar to this.
+In your terminal you should have output similar to this, obviously your Ethereal email address will be different.
 
 ```bash
   VITE v4.4.9  ready in 972 ms
@@ -1212,7 +1212,7 @@ conner.white16@ethereal.email
 }
 ```
 
-On the `signup` page of your app you should have output similar to this.
+On the `signup` page of your app you should have output similar to this, obviously your Ethereal email address will be different.
 
 ```json
 {
@@ -1222,8 +1222,16 @@ On the `signup` page of your app you should have output similar to this.
 }
 ```
 
-Well done, you created a new user in the database. :tada:
+Open the page with Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> to have a look at what happened in your database.
 
-```
+You should see a new `User` and a new `Key` in your database.
 
-```
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_user.png">
+
+Click on `User` to see the `User` table.
+
+You should see the `User` **id**, **email** and **email_verified** table for the newly created user.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_ new_user_details.png">
+
+Well done, you just created a new user in your database. :tada:
