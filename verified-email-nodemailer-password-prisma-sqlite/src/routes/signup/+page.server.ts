@@ -3,6 +3,10 @@ import { fail } from '@sveltejs/kit';
 import { isValidEmail } from '$lib/server/email';
 import { auth } from '$lib/server/lucia';
 
+import { generateRandomString } from 'lucia/utils';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		const form_data = await request.formData();
@@ -43,6 +47,33 @@ export const actions: Actions = {
 				attributes: {}
 			});
 			locals.auth.setSession(session); // set session cookie
+
+			// create a new token
+			const token = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
+			console.log('token : ' + token);
+
+			// create amount of time before the token expires
+			const token_expires_in_time = 1000 * 60 * 60 * 2;
+			console.log('token_expires_in_time : ' + token_expires_in_time); // => 7200000 milliseconds
+
+			// get the current time (UNIX) in milliseconds
+			const currentTimeInMilliseconds = new Date().getTime();
+			console.log('currentTimeInMilliseconds : ' + currentTimeInMilliseconds);
+
+			// add up the current time and the time until the token expires
+			const token_expires_at_this_time = currentTimeInMilliseconds + token_expires_in_time;
+			console.log('token_expires_at_this_time : ' + token_expires_at_this_time);
+
+			// add the new token to the EmailToken Model for the newly created user with the id being user.userId
+			const emailToken = await prisma.emailToken.create({
+				data: {
+					id: token,
+					expires: token_expires_at_this_time,
+					user_id: user.userId
+				}
+			});
+			// for now log the created emailToken
+			console.log(emailToken);
 
 			// for now log the created user
 			console.log(user);
