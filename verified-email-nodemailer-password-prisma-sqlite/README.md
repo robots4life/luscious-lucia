@@ -1427,11 +1427,11 @@ const token_expires_in_time = 1000 * 60 * 60 * 2;
 console.log('token_expires_in_time : ' + token_expires_in_time); // => 7200000 milliseconds
 
 // get the current time (UNIX) in milliseconds
-const currentTimeInMilliseconds = new Date().getTime();
-console.log('currentTimeInMilliseconds : ' + currentTimeInMilliseconds);
+const current_time_in_milliseconds = new Date().getTime();
+console.log('current_time_in_milliseconds : ' + current_time_in_milliseconds);
 
 // add up the current time and the time until the token expires
-const token_expires_at_this_time = currentTimeInMilliseconds + token_expires_in_time;
+const token_expires_at_this_time = current_time_in_milliseconds + token_expires_in_time;
 console.log('token_expires_at_this_time : ' + token_expires_at_this_time);
 ```
 
@@ -1512,19 +1512,19 @@ export const actions: Actions = {
 
 			// create a new token
 			const token = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
-			console.log(token);
+			console.log('token : ' + token);
 
 			// create amount of time before the token expires
 			const token_expires_in_time = 1000 * 60 * 60 * 2;
-			console.log(token_expires_in_time); // => 7200000 milliseconds
+			console.log('token_expires_in_time : ' + token_expires_in_time); // => 7200000 milliseconds
 
 			// get the current time (UNIX) in milliseconds
-			const currentTimeInMilliseconds = new Date().getTime();
-			console.log(currentTimeInMilliseconds);
+			const current_time_in_milliseconds = new Date().getTime();
+			console.log('current_time_in_milliseconds : ' + current_time_in_milliseconds);
 
 			// add up the current time and the time until the token expires
-			const token_expires_at_this_time = currentTimeInMilliseconds + token_expires_in_time;
-			console.log(token_expires_at_this_time);
+			const token_expires_at_this_time = current_time_in_milliseconds + token_expires_in_time;
+			console.log('token_expires_at_this_time : ' + token_expires_at_this_time);
 
 			// add the new token to the EmailToken Model for the newly created user with the id being user.userId
 			const emailToken = await prisma.emailToken.create({
@@ -1549,4 +1549,41 @@ export const actions: Actions = {
 } satisfies Actions;
 ```
 
-Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the `User` record like you did in this step.
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+In your terminal you should have output similar to this..
+
+```bash
+conner.white16@ethereal.email
+0123456789876543210
+token : xx5jz7zvn8nl4u3a35drd56d73sb2e3xphe7lerz3nh12gwl27xnkpqbvm9ouicqoagz8mlfx00honubuduhhacepxav7aigfq4v4h18j83g6fogpinro4kpvjqnn700
+token_expires_in_time : 7200000
+current_time_in_milliseconds : 1694681830184
+token_expires_at_this_time : 1694689030184
+{
+  id: 'xx5jz7zvn8nl4u3a35drd56d73sb2e3xphe7lerz3nh12gwl27xnkpqbvm9ouicqoagz8mlfx00honubuduhhacepxav7aigfq4v4h18j83g6fogpinro4kpvjqnn700',
+  expires: 1694689030184n,
+  user_id: 'zptpkjrggofepso'
+}
+{
+  email: 'conner.white16@ethereal.email',
+  emailVerified: false,
+  userId: 'zptpkjrggofepso'
+}
+```
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>.
+
+You should see the newly created `User`, `Key`, `Session` and `EmailToken`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_user_session_emailtoken.png">
+
+Feel free to check out the created tables in Prisma Studio.
+
+Have a look at the `EmailToken`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_emailtoken_details.png">
+
+Well done, you created a new `User`, a new `Session` as well as a `token` for that `User` that expires in a certain amount of `expires` time. :tada:

@@ -57,11 +57,11 @@ export const actions: Actions = {
 			console.log('token_expires_in_time : ' + token_expires_in_time); // => 7200000 milliseconds
 
 			// get the current time (UNIX) in milliseconds
-			const currentTimeInMilliseconds = new Date().getTime();
-			console.log('currentTimeInMilliseconds : ' + currentTimeInMilliseconds);
+			const current_time_in_milliseconds = new Date().getTime();
+			console.log('current_time_in_milliseconds : ' + current_time_in_milliseconds);
 
 			// add up the current time and the time until the token expires
-			const token_expires_at_this_time = currentTimeInMilliseconds + token_expires_in_time;
+			const token_expires_at_this_time = current_time_in_milliseconds + token_expires_in_time;
 			console.log('token_expires_at_this_time : ' + token_expires_at_this_time);
 
 			// add the new token to the EmailToken Model for the newly created user with the id being user.userId
