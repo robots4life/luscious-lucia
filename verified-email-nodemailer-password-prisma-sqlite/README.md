@@ -909,7 +909,7 @@ export const actions: Actions = {
 
 On the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> hit the submit button a few times.
 
-You should have output similar to this in your terminal.
+You should have output similar to this in your terminal..
 
 Your Ethereal email address obviously will be a the one you created in <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#13-create-an-ethereal-email-test-account" target="_blank">**1.3 Create an Ethereal email test account**</a>.
 
@@ -1196,7 +1196,7 @@ Start Prisma Studio with this command.
 
 Now go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
 
-In your terminal you should have output similar to this, obviously your Ethereal email address will be different.
+You should have output similar to this in your terminal..
 
 ```bash
   VITE v4.4.9  ready in 972 ms
@@ -1213,7 +1213,7 @@ conner.white16@ethereal.email
 }
 ```
 
-On the `signup` page of your app you should have output similar to this, obviously your Ethereal email address will be different.
+On the `signup` page of your app you should have output similar to this..
 
 ```json
 {
@@ -1344,7 +1344,7 @@ Confirm to delete the record.
 
 After you have deleted the record to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form again.
 
-Again, in your terminal you should have output similar to this, obviously your Ethereal email address will be different.
+Again, you should have output similar to this in your terminal..
 
 ```bash
 conner.white16@ethereal.email
@@ -1553,7 +1553,7 @@ Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://loca
 
 Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
 
-In your terminal you should have output similar to this..
+You should have output similar to this in your terminal..
 
 ```bash
 conner.white16@ethereal.email
@@ -1576,14 +1576,14 @@ token_expires_at_this_time : 1694689030184
 
 Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a>.
 
-You should see the newly created `User`, `Key`, `Session` and `EmailToken`.
+You should see each of these Models, `User`, `Key`, `Session` and `EmailToken`, now having data from the newly created user.
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_user_session_emailtoken.png">
 
 Feel free to check out the created tables in Prisma Studio.
 
-Have a look at the `EmailToken`.
+Have a look at the `EmailToken` Model.
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_emailtoken_details.png">
 
-Well done, you created a new `User`, a new `Session` as well as a `token` for that `User` that expires in a certain amount of `expires` time. :tada:
+Well done, you created a new `User`, a new `Session` as well as a `token` for that `User` that `expires` at a certain point in time. :tada:
