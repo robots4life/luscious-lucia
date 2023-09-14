@@ -848,6 +848,20 @@ Create a `+page.svelte` file in the folder `src/routes/signup`.
 </style>
 ```
 
+Note, I am populating the form input fields with the `email` address I get from Ethereal and a `password`.
+
+**Email**
+
+```html
+<input type="text" name="send_email" id="send_email" value="conner.white16@ethereal.email" />
+```
+
+**Password**
+
+```html
+<input type="password" name="send_password" id="send_password" value="0123456789876543210" />
+```
+
 Create a link to the `signup` page on the index page of your app.
 
 **src/routes/+page.svelte**
@@ -1028,11 +1042,11 @@ While the user id is the primary way of identifying a user, there are other ways
 
 These identifiers, be it from a user input or an external source, are provided by a **provider**, identified by a `providerId`.
 
-The unique id for that user within the provider is the `providerUserId`.
+The unique id for that user within the **provider** is the `providerUserId`.
 
 The unique combination of the provider id and provider user id makes up a `key`.
 
-The `key` here defines the connection between the user and the provided unique `email` (`providerUserId`) when using the `email` & password authentication method (`providerId`).
+The `key` here defines the connection between the user and the provided unique `email` (`providerUserId`) when using the `email` & `password` authentication method (`providerId`).
 
 We’ll also store the password in the `key`.
 
@@ -1157,4 +1171,59 @@ declare global {
 }
 
 export {};
+```
+
+Let's create a new user and see what happens when you submit the form.
+
+Start your development server.
+
+`npm run dev`
+
+`p dev`
+
+Now also start Prisma Studio (in a new terminal), a visual interface for your database.
+
+<a href="https://www.prisma.io/blog/prisma-studio-3rtf78dg99fe" target="_blank">https://www.prisma.io/blog/prisma-studio-3rtf78dg99fe</a>
+
+Start Prisma Studio with this command.
+
+<a href="https://www.prisma.io/blog/prisma-studio-3rtf78dg99fe#4-launch-prisma-studio-" target="_blank">https://www.prisma.io/blog/prisma-studio-3rtf78dg99fe#4-launch-prisma-studio-</a>
+
+`npx prisma studio`
+
+`px prisma studio`
+
+Now go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+In your terminal you should have output similar to this.
+
+```bash
+  VITE v4.4.9  ready in 972 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+conner.white16@ethereal.email
+0123456789876543210
+{
+  email: 'conner.white16@ethereal.email',
+  emailVerified: false,
+  userId: 'ly6xl4sb4rvboku'
+}
+```
+
+On the `signup` page of your app you should have output similar to this.
+
+```json
+{
+	"timestamp": "2023-09-14T06:39:41.839Z",
+	"email": "conner.white16@ethereal.email",
+	"password": "0123456789876543210"
+}
+```
+
+Well done, you created a new user in the database. :tada:
+
+```
+
 ```
