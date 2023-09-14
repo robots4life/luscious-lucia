@@ -760,7 +760,7 @@ declare global {
 	namespace Lucia {
 		type Auth = import('$lib/server/lucia').Auth;
 		type DatabaseUserAttributes = {
-			// required fields (i.e. id) should not be defined here
+			// required Prisma Schema fields (i.e. id) should not be defined here
 			email: string;
 			email_verified: boolean;
 		};
@@ -905,7 +905,7 @@ conner.white16@ethereal.email
 0123456789876543210
 ```
 
-#### 4.2 Do a basic check with the received form values
+### 4.2 Do a basic check with the received form values
 
 If the request couldn't be processed because of invalid data, you can return validation errors - along with the previously submitted form values - back to the user so that they can try again.
 
@@ -1011,3 +1011,83 @@ export const actions: Actions = {
 ```
 
 ### 4.4 Add new user to the database
+
+After you have done a basic check with the received form values you can create a new user.
+
+Users can be created with `Auth.createUser()`.
+
+<a href="https://lucia-auth.com/basics/users" target="_blank">https://lucia-auth.com/basics/users</a>
+
+This will create a new user, and, if `key` is defined, a new `key`.
+
+<a href="https://lucia-auth.com/basics/keys" target="_blank">https://lucia-auth.com/basics/keys</a>
+
+Keys represent the relationship between a user and a reference to that user.
+
+While the user id is the primary way of identifying a user, there are other ways your app may reference a user during the authentication step such as by their `username`, `email`, or Github user id.
+
+These identifiers, be it from a user input or an external source, are provided by a **provider**, identified by a `providerId`.
+
+The unique id for that user within the provider is the `providerUserId`.
+
+The unique combination of the provider id and provider user id makes up a `key`.
+
+The `key` here defines the connection between the user and the provided unique `email` (`providerUserId`) when using the `email` & password authentication method (`providerId`).
+
+We’ll also store the password in the `key`.
+
+This `key` will be used to get the user and validate the password when logging them in.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/email';
+import { auth } from '$lib/server/lucia';
+
+export const actions: Actions = {
+	default: async ({ request }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+			// for now log the created user
+			console.log(user);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// for now you return the received form values back to the signup page
+		return { timestamp: new Date(), email, password };
+	}
+} satisfies Actions;
+```

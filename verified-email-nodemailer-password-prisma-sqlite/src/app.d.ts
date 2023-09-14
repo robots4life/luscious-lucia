@@ -18,7 +18,7 @@ declare global {
 	namespace Lucia {
 		type Auth = import('$lib/server/lucia').Auth;
 		type DatabaseUserAttributes = {
-			// required fields (i.e. id) should not be defined here
+			// required Prisma Schema fields (i.e. id) should not be defined here
 			email: string;
 			email_verified: boolean;
 		};
