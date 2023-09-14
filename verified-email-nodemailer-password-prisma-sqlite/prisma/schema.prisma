@@ -24,7 +24,7 @@ model Key {
   id              String  @id @unique
   hashed_password String?
   user_id         String
-  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }
@@ -34,7 +34,7 @@ model Session {
   user_id        String
   active_expires BigInt
   idle_expires   BigInt
-  user           User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }
@@ -43,7 +43,7 @@ model EmailToken {
   id      String @id @unique
   expires BigInt
   user_id String
-  user    User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }

@@ -557,7 +557,7 @@ model Key {
   id              String  @id @unique
   hashed_password String?
   user_id         String
-  user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }
@@ -567,7 +567,7 @@ model Session {
   user_id        String
   active_expires BigInt
   idle_expires   BigInt
-  user           User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }
@@ -576,10 +576,11 @@ model EmailToken {
   id      String @id @unique
   expires BigInt
   user_id String
-  user    User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }
+
 ```
 
 ### 2.5 Generate SQLite database with Prisma Schema
@@ -1368,3 +1369,49 @@ Check out the `Application` tab and select `Storage -> Cookies`.
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/chrome_dev_tools_application_storage_cookies.png">
 
 Well done, you created a new `User` and a new `Session` in your database and created a `session cookie` in your app. :tada:
+
+## 5.0 Generate and Validate Email Tokens
+
+Once a user signs up to our app and supplies their email address during the sing up process an email with a verification link will be sent to that supplied email address.
+
+This link could look something like this.
+
+https://awesomeapp.example.com/email-verification/9846519846268798465235484632164684651354651321654846516465186325
+
+The **token** is the part of the link that consists of a sequence of random numbers, in this case, 64 of them.
+
+During the sign up process this sequence of random numbers, the `token`, will also be stored in the database alongside other user data.
+
+Once the user opens the email message and clicks on that verification link, the token will be available as query parameter of the page that does the verification.
+
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams" target="_blank">query parameters -> https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams</a>
+
+If the token that is received as query parameter on the verification page is the same as the token that was created during sign up of the new user, we can be sure that the user opened the email message and clicked on the verification link.
+
+Hence the email address is verified and you can let the user access the protected routes of your app.
+
+### 5.1 Generate new Token
+
+Lucia has a few utility functions that we can use to generate tokens.
+
+<a href="https://lucia-auth.com/reference/lucia/modules/utils" target="_blank">https://lucia-auth.com/reference/lucia/modules/utils</a>
+
+Let's use the utility function `generaterandomstring()`to generate a random string consisting of the numbers `0` - `9` and the letters `a` - `z`.
+
+<a href="https://lucia-auth.com/reference/lucia/modules/utils#generaterandomstring" target="_blank">https://lucia-auth.com/reference/lucia/modules/utils#generaterandomstring</a>
+
+Create a new file `token.ts` in the folder `src/lib/server`.
+
+**src/lib/server/token.ts**
+
+```ts
+import { generateRandomString } from 'lucia/utils';
+
+const randomString = generateRandomString(128, 'abcdefghijklmnopqrstuvwxyz');
+```
+
+import { generateRandomString } from 'lucia/utils';
+
+const randomString = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
+
+export default randomString;
