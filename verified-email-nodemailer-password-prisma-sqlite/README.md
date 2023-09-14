@@ -325,9 +325,9 @@ You are going to use the Ethereal account details throughout your app, so it mak
 
 Like a good friend, SvelteKit keeps your secrets. When writing your backend and frontend in the same repository, it can be easy to accidentally import sensitive data into your front-end code (environment variables containing API keys, for example). SvelteKit provides a way to prevent this entirely: server-only modules.
 
-Create a new file `.env` in the `src` folder.
+Create a new file `.env` in the root folder.
 
-**src/.env**
+**.env**
 
 ```bash
 EMAIL_HOST="smtp.ethereal.email"
@@ -663,6 +663,12 @@ Your database is now in sync with your schema.
 **.env**
 
 ```bash
+EMAIL_HOST="smtp.ethereal.email"
+EMAIL_PORT="587"
+EMAIL_AUTH_USER="conner.white16@ethereal.email"
+EMAIL_AUTH_PASS="MvPJdfrde3Uz8zewR6"
+
+# This was inserted by `prisma init`:
 # Environment variables declared in this file are automatically made available to Prisma.
 # See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
 
