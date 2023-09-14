@@ -1391,7 +1391,7 @@ During the sign up process this sequence of random numbers, the `token`, will al
 
 Once the user opens the email message and clicks on the verification link, the token will be available as query parameter of the page that does the verification.
 
-<a href="https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams" target="_blank">query parameters -> https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams</a>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams" target="_blank">MDN reference query parameters -> https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams</a>
 
 If the token that is received as query parameter on the verification page is the same as the token that was created during sign up of the new user in the database, we can be sure that the user opened the email message and clicked on the verification link.
 
@@ -1419,7 +1419,7 @@ const token = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
 console.log('token : ' + token);
 ```
 
-Let's give the user a certain amount of time before the token expires. For this you take the current time and add an amount of time the user has to click the verification link to it.
+Let's give the user a certain amount of time before the token expires. For this you take the current time and add the amount of time the user has to click the verification link to it. When this moment in time is reached the token will expire.
 
 ```ts
 // create amount of time before the token expires
@@ -1587,3 +1587,184 @@ Have a look at the `EmailToken` Model.
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_emailtoken_details.png">
 
 Well done, you created a new `User`, a new `Session` as well as a `token` for that `User` that `expires` at a certain point in time. :tada:
+
+### 5.2 Refactor creating a new Token
+
+Having all the logic to create a new token in the default form action for the `signup` page is not OK. As you will see later you are also going to need more logic related to creating and validating tokens. So let's turn the token generation into a module.
+
+When you create a new user you are going to get an ` user.userId` for that user from the `auth.createUser()` method.
+
+Since you are going to pass the `user.userId` to the `EmailToken` model when generating a new token for a new user you need to use that `user.userId` as a parameter for a function that deals with creating a new token for a new user.
+
+```ts
+const generateEmailVerificationToken = async (userId: string) => {
+	// create a new token
+	const token = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
+	console.log('token : ' + token);
+
+	// create amount of time before the token expires
+	const token_expires_in_time = 1000 * 60 * 60 * 2;
+	console.log('token_expires_in_time : ' + token_expires_in_time); // => 7200000 milliseconds
+
+	// get the current time (UNIX) in milliseconds
+	const current_time_in_milliseconds = new Date().getTime();
+	console.log('current_time_in_milliseconds : ' + current_time_in_milliseconds);
+
+	// add up the current time and the time until the token expires
+	const token_expires_at_this_time = current_time_in_milliseconds + token_expires_in_time;
+	console.log('token_expires_at_this_time : ' + token_expires_at_this_time);
+
+	// add the new token to the EmailToken Model for the newly created user with the id being user.userId
+	const emailToken = await prisma.emailToken.create({
+		data: {
+			id: token,
+			expires: token_expires_at_this_time,
+			user_id: userId
+		}
+	});
+	// for now log the created emailToken
+	console.log(emailToken);
+
+	return token;
+};
+```
+
+At the end of this `generateEmailVerificationToken` function `return` the created token so it can be used in further logic in your default form action for the `signup` page.
+
+Let's turn this function into a module now.
+
+Create a new file `token.ts` in the folder `src/lib/server/token`.
+
+Copy the function to that `token.ts` file and export it from the module.
+
+<a href="https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export" target="_blank">MDN reference export -> https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export</a>
+
+Again, make sure that you also import the utility function `generaterandomstring()` from `Lucia` as well as the `PrismaClient` client from `Prisma`.
+
+```ts
+import { generateRandomString } from 'lucia/utils';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+```
+
+**src/lib/server/token.ts**
+
+```ts
+import { generateRandomString } from 'lucia/utils';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
+export const generateEmailVerificationToken = async (userId: string) => {
+	// create a new token
+	const token = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
+	console.log('token : ' + token);
+
+	// create amount of time before the token expires
+	const token_expires_in_time = 1000 * 60 * 60 * 2;
+	console.log('token_expires_in_time : ' + token_expires_in_time); // => 7200000 milliseconds
+
+	// get the current time (UNIX) in milliseconds
+	const current_time_in_milliseconds = new Date().getTime();
+	console.log('current_time_in_milliseconds : ' + current_time_in_milliseconds);
+
+	// add up the current time and the time until the token expires
+	const token_expires_at_this_time = current_time_in_milliseconds + token_expires_in_time;
+	console.log('token_expires_at_this_time : ' + token_expires_at_this_time);
+
+	// add the new token to the EmailToken Model for the newly created user with the id being user.userId
+	const emailToken = await prisma.emailToken.create({
+		data: {
+			id: token,
+			expires: token_expires_at_this_time,
+			user_id: userId
+		}
+	});
+	// for now log the created emailToken
+	console.log(emailToken);
+
+	return token;
+};
+```
+
+Now remove any logic that deals with generating a new token for a new user in the default fom action for the `signup` page and use the `token.ts` module instead.
+
+Import the module at the top of the file and use the function inside the form action.
+
+```ts
+import { generateEmailVerificationToken } from '$lib/server/token';
+...
+try {
+	...
+	// create the token for the user
+	const token = generateEmailVerificationToken(user.userId);
+	console.log(token);
+} catch (error) {
+	...
+}
+```
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/email';
+import { auth } from '$lib/server/lucia';
+import { generateEmailVerificationToken } from '$lib/server/token';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// create the token for the user
+			const token = generateEmailVerificationToken(user.userId);
+			console.log(token);
+
+			// for now log the created user
+			console.log(user);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// for now you return the received form values back to the signup page
+		return { timestamp: new Date(), email, password };
+	}
+} satisfies Actions;
+```
