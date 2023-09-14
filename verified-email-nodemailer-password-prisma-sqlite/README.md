@@ -311,7 +311,38 @@ const transporter = nodemailer.createTransport({
 });
 ```
 
-### 1.4 Send verification email with Nodemailer to your Ethereal email test account
+You can access these private environment variables only on server-side code, to use them, simply import them in the files where you need to access them.
+
+```ts
+import { EMAIL_HOST, EMAIL_PORT, EMAIL_AUTH_USER, EMAIL_AUTH_PASS } from '$env/static/private';
+```
+
+### 1.4 Store Ethereal email test account details in your private environment file
+
+You are going to use the Ethereal account details throughout your app, so it makes sense to store the `Nodemailer configuration` details in your private environment file. Later when you start using a real email service you can just replace the configuration values in your environment file with the real values you obtain from the chosen email service.
+
+<a href="https://kit.svelte.dev/docs/server-only-modules#private-environment-variables" target="_blank">https://kit.svelte.dev/docs/server-only-modules#private-environment-variables</a>
+
+Like a good friend, SvelteKit keeps your secrets. When writing your backend and frontend in the same repository, it can be easy to accidentally import sensitive data into your front-end code (environment variables containing API keys, for example). SvelteKit provides a way to prevent this entirely: server-only modules.
+
+Create a new file `.env` in the `src` folder.
+
+**src/.env**
+
+```bash
+EMAIL_HOST="smtp.ethereal.email"
+EMAIL_PORT="587"
+EMAIL_AUTH_USER="conner.white16@ethereal.email"
+EMAIL_AUTH_PASS="MvPJdfrde3Uz8zewR6"
+```
+
+In any file that **executes logic only server-side** you can import them, such files are i.e. **`hooks.server.js`** or **`+page.server.js`** or **`hooks.server.ts`** or **`+page.server.ts`**.
+
+```ts
+import { EMAIL_HOST, EMAIL_PORT, EMAIL_AUTH_USER, EMAIL_AUTH_PASS } from '$env/static/private';
+```
+
+### 1.5 Send verification email with Nodemailer to your Ethereal email test account
 
 Nodemailer has a nice example of how to send email.
 
@@ -322,15 +353,16 @@ You are going to use that in the `+page.server.ts` file of the `email` page.
 **src/routes/email/+page.server.ts**
 
 ```ts
+import { EMAIL_HOST, EMAIL_PORT, EMAIL_AUTH_USER, EMAIL_AUTH_PASS } from '$env/static/private';
 import nodemailer from 'nodemailer';
 
 // define the Nodemailer transporter with the Ethereal account details
 const transporter = nodemailer.createTransport({
-	host: 'smtp.ethereal.email',
-	port: 587,
+	host: EMAIL_HOST,
+	port: EMAIL_PORT,
 	auth: {
-		user: 'conner.white16@ethereal.email',
-		pass: 'MvPJdfrde3Uz8zewR6'
+		user: EMAIL_AUTH_USER,
+		pass: EMAIL_AUTH_PASS
 	}
 });
 
@@ -338,7 +370,7 @@ const transporter = nodemailer.createTransport({
 async function sendVerificationMessage(to: string, subject: string, text: string, html = '') {
 	try {
 		const info = await transporter.sendMail({
-			from: 'conner.white16@ethereal.email', // sender address
+			from: EMAIL_AUTH_USER, // sender address
 			to: to, // list of receivers
 			subject: subject, // Subject line
 			text: text, // plain text body
@@ -369,11 +401,7 @@ export const actions: Actions = {
 		if (typeof text === 'string' && typeof number === 'string') {
 			//
 			// const info will hold the return value of the above return info
-			const info = sendVerificationMessage(
-				'conner.white16@ethereal.email',
-				'Email Verification',
-				text + number
-			);
+			const info = sendVerificationMessage(EMAIL_AUTH_USER, 'Email Verification', text + number);
 			// return the info object to the email page
 			return info;
 		}
@@ -1374,7 +1402,7 @@ Check out the `Application` tab and select `Storage -> Cookies`.
 
 Well done, you created a new `User` and a new `Session` in your database and created a `session cookie` in your app. :tada:
 
-## 5.0 Generate and Validate Email Tokens
+## 5.0 Generate Email Token
 
 Once a user signs up to our app and supplies their email address during the sign up process an email with a verification link will be sent to that supplied email address.
 
@@ -1767,4 +1795,55 @@ export const actions: Actions = {
 		return { timestamp: new Date(), email, password };
 	}
 } satisfies Actions;
+```
+
+## 6.0 Send Email with Verification Link to newly created User
+
+Let's send the newly created user an email with the verification link.
+
+Note that the created token for that user is of course part of the verification link.
+
+Similar to the previous step, you are going to use a module for this functionality.
+
+Create a new file `sendVerificationLink.ts` in folder `src/lib/server/message`.
+
+**src/lib/server/message/sendVerificationLink.ts**
+
+```ts
+import { EMAIL_HOST, EMAIL_PORT, EMAIL_AUTH_USER, EMAIL_AUTH_PASS } from '$env/static/private';
+import nodemailer from 'nodemailer';
+
+// define the Nodemailer transporter with the Ethereal account details
+const transporter = nodemailer.createTransport({
+	host: EMAIL_HOST,
+	port: EMAIL_PORT,
+	auth: {
+		user: EMAIL_AUTH_USER,
+		pass: EMAIL_AUTH_PASS
+	}
+});
+
+// define a sendVerificationMessage function with parameters for the message
+export async function sendVerificationMessage(
+	to: string,
+	subject: string,
+	text: string,
+	html = ''
+) {
+	try {
+		const info = await transporter.sendMail({
+			from: EMAIL_AUTH_USER, // sender address
+			to: to, // list of receivers
+			subject: subject, // Subject line
+			text: text, // plain text body
+			html: html // html body
+		});
+		console.log('Message sent: %s', info.messageId);
+		//
+		// return the info object after sending the message
+		return info;
+	} catch (error) {
+		console.log(error);
+	}
+}
 ```

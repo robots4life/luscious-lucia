@@ -1,6 +1,6 @@
 import type { Actions } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
-import { isValidEmail } from '$lib/server/email';
+import { isValidEmail } from '$lib/server/isValidEmail';
 import { auth } from '$lib/server/lucia';
 import { generateEmailVerificationToken } from '$lib/server/token';
 

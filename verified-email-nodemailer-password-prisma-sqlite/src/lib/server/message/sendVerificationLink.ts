@@ -12,7 +12,12 @@ const transporter = nodemailer.createTransport({
 });
 
 // define a sendVerificationMessage function with parameters for the message
-async function sendVerificationMessage(to: string, subject: string, text: string, html = '') {
+export async function sendVerificationMessage(
+	to: string,
+	subject: string,
+	text: string,
+	html = ''
+) {
 	try {
 		const info = await transporter.sendMail({
 			from: EMAIL_AUTH_USER, // sender address
@@ -29,26 +34,3 @@ async function sendVerificationMessage(to: string, subject: string, text: string
 		console.log(error);
 	}
 }
-
-import type { Actions } from '@sveltejs/kit';
-
-export const actions: Actions = {
-	default: async ({ request }) => {
-		const form_data = await request.formData();
-
-		const text = form_data.get('send_text');
-		console.log(text);
-
-		const number = form_data.get('send_number');
-		console.log(number);
-
-		// call the sendVerificationMessage function and pass the message arguments
-		if (typeof text === 'string' && typeof number === 'string') {
-			//
-			// const info will hold the return value of the above return info
-			const info = sendVerificationMessage(EMAIL_AUTH_USER, 'Email Verification', text + number);
-			// return the info object to the email page
-			return info;
-		}
-	}
-};
