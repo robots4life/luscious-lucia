@@ -1091,3 +1091,70 @@ export const actions: Actions = {
 	}
 } satisfies Actions;
 ```
+
+Remember, you have can access the `attributes` inside `auth.createUser` because you defined them when initializing Lucia here <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#32-initialize-lucia" target="_blank">**3.2 Initialize Lucia**</a> and you can access their types because you defined the types here <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#33-set-up-types-for-lucia" target="_blank">**3.3. Set up types for Lucia**</a>.
+
+**src/lib/server/lucia.ts**
+
+```ts
+import { lucia } from 'lucia';
+import { sveltekit } from 'lucia/middleware';
+import { dev } from '$app/environment';
+import { prisma } from '@lucia-auth/adapter-prisma';
+import { PrismaClient } from '@prisma/client';
+
+const client = new PrismaClient();
+
+export const auth = lucia({
+	env: dev ? 'DEV' : 'PROD',
+	middleware: sveltekit(),
+	adapter: prisma(client, {
+		user: 'user', // model User {}
+		key: 'key', // model Key {}
+		session: 'session' // model Session {}
+	}),
+	getUserAttributes: (data) => {
+		return {
+			email: data.email,
+			// Boolean(data.email_verified) if stored as an integer
+			emailVerified: data.email_verified
+		};
+	}
+});
+
+export type Auth = typeof auth;
+```
+
+**src/app.d.ts**
+
+```ts
+// See https://kit.svelte.dev/docs/types#app
+// for information about these interfaces
+
+// https://lucia-auth.com/getting-started/sveltekit#set-up-types
+declare global {
+	namespace App {
+		// interface Error {}
+		interface Locals {
+			auth: import('lucia').AuthRequest;
+		}
+		// interface PageData {}
+		// interface Platform {}
+	}
+}
+
+/// <reference types="lucia" />
+declare global {
+	namespace Lucia {
+		type Auth = import('$lib/server/lucia').Auth;
+		type DatabaseUserAttributes = {
+			// required Prisma Schema fields (i.e. id) should not be defined here
+			email: string;
+			email_verified: boolean;
+		};
+		type DatabaseSessionAttributes = Record<string, never>;
+	}
+}
+
+export {};
+```
