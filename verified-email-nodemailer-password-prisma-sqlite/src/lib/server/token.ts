@@ -30,5 +30,6 @@ export const generateEmailVerificationToken = async (userId: string) => {
 	// for now log the created emailToken
 	console.log(emailToken);
 
+	// you are returning a Promise here
 	return token;
 };

@@ -28,6 +28,7 @@ export async function sendVerificationMessage(
 		});
 		console.log('Message sent: %s', info.messageId);
 		//
+		// you are returning a Promise here
 		// return the info object after sending the message
 		return info;
 	} catch (error) {

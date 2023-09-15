@@ -1376,7 +1376,7 @@ Confirm to delete the record.
 
 #### 4.5.2 Create a new User and new Session for the User
 
-After you have deleted the record to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form again.
+After you have deleted the previously created `User` record to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form again.
 
 Again, you should have output similar to this in your terminal..
 
@@ -1481,7 +1481,7 @@ const emailToken = await prisma.emailToken.create({
 });
 ```
 
-Make sure that you also import the utility function `generaterandomstring()` from `Lucia` as well as the `PrismaClient` client from `Prisma`.
+Make sure that you also import the utility function `generaterandomstring()` from `lucia/utils` as well as the `PrismaClient` client from `@prisma/client`.
 
 ```ts
 import { generateRandomString } from 'lucia/utils';
@@ -1583,7 +1583,7 @@ export const actions: Actions = {
 } satisfies Actions;
 ```
 
-Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
 
 Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
 
@@ -1631,7 +1631,7 @@ When you create a new user you are going to get an ` user.userId` for that user 
 Since you are going to pass the `user.userId` to the `EmailToken` model when generating a new token for a new user you need to use that `user.userId` as a parameter for a function that deals with creating a new token for a new user.
 
 ```ts
-const generateEmailVerificationToken = async (userId: string) => {
+export const generateEmailVerificationToken = async (userId: string) => {
 	// create a new token
 	const token = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
 	console.log('token : ' + token);
@@ -1659,6 +1659,7 @@ const generateEmailVerificationToken = async (userId: string) => {
 	// for now log the created emailToken
 	console.log(emailToken);
 
+	// you are returning a Promise here
 	return token;
 };
 ```
@@ -1673,7 +1674,7 @@ Copy the function to that `token.ts` file and export it from the module.
 
 <a href="https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export" target="_blank">MDN reference export -> https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export</a>
 
-Again, make sure that you also import the utility function `generaterandomstring()` from `Lucia` as well as the `PrismaClient` client from `Prisma`.
+Again, make sure that you also import the utility function `generaterandomstring()` from `lucia/utils` as well as the `PrismaClient` client from `@prisma/client`.
 
 ```ts
 import { generateRandomString } from 'lucia/utils';
@@ -1716,13 +1717,26 @@ export const generateEmailVerificationToken = async (userId: string) => {
 	// for now log the created emailToken
 	console.log(emailToken);
 
+	// you are returning a Promise here
 	return token;
 };
 ```
 
 Now remove any logic that deals with generating a new token for a new user in the default fom action for the `signup` page and use the `token.ts` module instead.
 
-Import the module at the top of the file and use the function inside the form action.
+Import the module at the top of the file and use the imported function inside the default form action of the `signup` page.
+
+Note that the function `generateEmailVerification()` is declared as an asynchronous function because it deals with manipulating data in your database.
+
+This means that the result of the function, the return value, is a **promise**.
+
+```ts
+return token;
+```
+
+In order to use the return value once it is **resolved** you have to **await** the return result.
+
+Short, when calling the `generateEmailVerification()` function prefix it with the **await** keyword to be able to work with the resolved result, the `token`, of the function.
 
 ```ts
 import { generateEmailVerificationToken } from '$lib/server/token';
@@ -1788,7 +1802,7 @@ export const actions: Actions = {
 			locals.auth.setSession(session); // set session cookie
 
 			// create the token for the user
-			const token = generateEmailVerificationToken(user.userId);
+			const token = await generateEmailVerificationToken(user.userId);
 			console.log(token);
 
 			// for now log the created user
@@ -1846,6 +1860,7 @@ export async function sendVerificationMessage(
 		});
 		console.log('Message sent: %s', info.messageId);
 		//
+		// you are returning a Promise here
 		// return the info object after sending the message
 		return info;
 	} catch (error) {
@@ -1853,3 +1868,156 @@ export async function sendVerificationMessage(
 	}
 }
 ```
+
+Now use this module in `+page.server.ts` file of the `signup` page.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/isValidEmail';
+import { auth } from '$lib/server/lucia';
+import { generateEmailVerificationToken } from '$lib/server/token';
+import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// create the token for the user
+			const token = await generateEmailVerificationToken(user.userId);
+			console.log(token);
+
+			// send the newly created user an email message with the verification link
+			const subject = 'Awesome App - Verification Link';
+			const text = `
+Hello ${email}, please open on this verification link in your browser to verify your email address, thank you.
+			
+http://localhost:5173/verify/${token}
+
+Awesome App Team
+`;
+			const html = `
+Hello ${email},<br /><br />
+
+please click on this verification link to verify your email address, thank you.<br /><br />
+			
+<a href="http://localhost:5173/verify/${token}">Verify Your Email Address</a><br /><br />
+
+<strong>Awesome App Team</strong>
+`;
+			const message = await sendVerificationMessage(email, subject, text, html);
+			console.log(message);
+
+			// for now log the created user
+			console.log(user);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// for now you return the received form values back to the signup page
+		return { timestamp: new Date(), email, password };
+	}
+} satisfies Actions;
+```
+
+Obviously the code is littered with the email plaintext and html content, you wil address this later.
+
+Now go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+You should have output similar to this in your terminal..
+
+```bash
+conner.white16@ethereal.email
+0123456789876543210
+token : i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd
+token_expires_in_time : 7200000
+current_time_in_milliseconds : 1694782519702
+token_expires_at_this_time : 1694789719702
+{
+  id: 'i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd',
+  expires: 1694789719702n,
+  user_id: 'zedsn7uqc90yamd'
+}
+i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd
+Message sent: <d831726f-3e04-8a71-3fc5-b969bd7723c7@ethereal.email>
+{
+  accepted: [ 'conner.white16@ethereal.email' ],
+  rejected: [],
+  ehlo: [ 'PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH LOGIN PLAIN' ],
+  envelopeTime: 114,
+  messageTime: 136,
+  messageSize: 1352,
+  response: '250 Accepted [STATUS=new MSGID=ZQFaVM2l51sVUMSAZQRUOM.vdLF4Ss7gAAAAKsoBEzHGleEQjwpGqer701E]',
+  envelope: {
+    from: 'conner.white16@ethereal.email',
+    to: [ 'conner.white16@ethereal.email' ]
+  },
+  messageId: '<d831726f-3e04-8a71-3fc5-b969bd7723c7@ethereal.email>'
+}
+{
+  email: 'conner.white16@ethereal.email',
+  emailVerified: false,
+  userId: 'zedsn7uqc90yamd'
+}
+```
+
+Go to your Ethereal messages <a href="https://ethereal.email/messages" target="_blank">https://ethereal.email/messages</a> and click on the email you just sent.
+
+**HTML**
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_verification_message_details_html.png">
+
+**Plaintext**
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_verification_message_details_plaintext.png">
+
+Well done, you
+
+- created a new `User`,
+- a new `Session`
+- as well as a `token` for that `User`
+- that `expires` at a certain point in time
+- and you send the `User` an email
+- with a verification link
+- to verify their email address.
+
+:tada:
