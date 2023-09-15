@@ -2022,7 +2022,7 @@ Well done, you
 - a new `Session`
 - as well as a `token` for that `User`
 - that `expires` at a certain point in time
-- and you send the `User` an email
+- and you sent the `User` an email
 - with a verification link
 - to verify their email address.
 
