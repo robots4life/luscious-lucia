@@ -2022,3 +2022,208 @@ Well done, you
 - to verify their email address.
 
 :tada:
+
+## 7.0 Validate Email Token
+
+Now that a new user can sign up and in the process receives an email message with the verification link it is time to check the token in that verification link.
+
+The verification link has this format.
+
+```ts
+http://localhost:5173/verify/${token}
+```
+
+Example verification link
+
+```ts
+http://localhost:5173/verify/i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd
+```
+
+So when the user clicks on that verification link in their email message they will land on a page in your app that has 3 parts to it.
+
+**`http://localhost:5173`** the domain of your app + **`/verify`** a page of your app + **`/token`** another page of your app
+
+So this means that you will need some sort of way to handle a request to such a route/page in your app.
+
+In detail you will need
+
+1. a route/page `/verify` that new users can be redirected to once they have signed up to your app
+2. a route/page `/token` that will receive the token as part of the URL string / query parameter
+
+### 7.1 Create a verify page
+
+Create a new file `+page.svelte` in the folder `src/routes/verify`.
+
+**src/routes/verify/+page.svelte**
+
+```html
+<h1>Email verification</h1>
+<p>Your email verification link was sent to your email address.</p>
+```
+
+This is it for now, you will come back to this page later.
+
+### 7.2 Create a token page
+
+This page is not a normal page where the user can see information displayed to them as if they would be browsing other pages of your app.
+
+On this page no information is in fact shown to the user.
+
+However you will need a way to access the string that is made up of the generated token in the verification link.
+
+Note, you are redirecting the user to a page like this.
+
+```ts
+http://localhost:5173/verify/i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd
+```
+
+This means that you will need a way to access the part
+
+`i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd`
+
+of that link.
+
+For this SvelteKit uses what is sometimes referred to as an **API route** or an **endpoint** or a **server endpoint**.
+
+<a href="https://kit.svelte.dev/docs/routing#server" target="_blank">https://kit.svelte.dev/docs/routing#server</a>
+
+However the part
+
+`i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd`
+
+of the verification link will always change since it will never be the same for any given user, this part of the link is **dynamic**.
+
+To handle this case SvelteKit uses routes with **dynamic parameters**.
+
+<a href="https://learn.svelte.dev/tutorial/params" target="_blank">https://learn.svelte.dev/tutorial/params</a>
+
+This means that you will need to create a **server endpoint** with a **dynamic parameter**.
+
+<a href="https://learn.svelte.dev/tutorial/get-handlers" target="_blank">https://learn.svelte.dev/tutorial/get-handlers</a>
+
+SvelteKit allows you to create more than just pages. You can also create **API route** or an **endpoint** or a **server endpoint** by adding a `+server.ts` file that exports functions corresponding to HTTP methods: **GET**, **PUT**, **POST**, **PATCH** and **DELETE**.
+
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods" target="_blank">MDN reference HTTP request methods -> https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods</a>
+
+Create a new file **`+server.ts`** in the folder `src/routes/verify/`**[token]**.
+
+Take great care to note that the folder name has square brackets around it, **`[token]`** !
+
+This means that any link to this route will be available to SvelteKit as a **dynamic parameter**.
+
+The `+server.ts` file is also different to a normal `+page.server.ts` file.
+
+These are important concepts to understand, so take great care here.
+
+Let's start with a simple `+server.ts` file to see what is going on.
+
+**src/routes/verify/[token]/+server.ts**
+
+```ts
+import type { RequestHandler } from './$types';
+
+export const GET: RequestHandler = async () => {
+	// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
+	// new Response(body, options)
+	return new Response('abc123');
+};
+```
+
+Visit this page of your app now <a href="http://localhost:5173/verify/token-string" target="_blank">http://localhost:5173/verify/token-string</a>.
+
+You should see that the page returns the string `abc123`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/server_endpoint_get_request.png">
+
+Now let's see how you can get access to the token, the random string, in the verification link.
+
+You know already that this part of the verification link is dynamic and to get this information from the link SvelteKit uses parameters.
+
+<a href="https://kit.svelte.dev/docs/load#using-url-data" target="_blank">https://kit.svelte.dev/docs/load#using-url-data</a>
+
+Often the load function depends on the URL in one way or another. For this, the load function provides you with `url`, `route` and `params`.
+
+<a href="https://kit.svelte.dev/docs/load#using-url-data-params" target="_blank">https://kit.svelte.dev/docs/load#using-url-data-params</a>
+
+Let's use `params` in the `GET` method for this **API route**.
+
+**src/routes/verify/[token]/+server.ts**
+
+```ts
+import type { RequestHandler } from './$types';
+
+export const GET: RequestHandler = async ({ params }) => {
+	console.log(params);
+
+	const body = JSON.stringify(params);
+
+	// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
+	// new Response(body, options)
+	return new Response(body);
+};
+```
+
+Visit this page of your app now <a href="http://localhost:5173/verify/token-string" target="_blank">http://localhost:5173/verify/token-string</a>.
+
+You should see that the page returns
+
+1. the name of the parameter as defined by the variable of the folder name in square brackets and
+2. the value of that variable
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/server_endpoint_get_request_params.png">
+
+You should have this output in your terminal.
+
+```bash
+  VITE v4.4.9  ready in 901 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+{ token: 'token-string' }
+```
+
+Change the `token` part of the link to anything you like and check the output again.
+
+For example visit this page of your app now <a href="http://localhost:5173/verify/12ab34cd" target="_blank">http://localhost:5173/verify/12ab34cd</a>.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/server_endpoint_get_request_params_token.png">
+
+You should have this output in your terminal now.
+
+```bash
+  VITE v4.4.9  ready in 901 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+{ token: 'token-string' }
+{ token: '12ab34cd' }
+```
+
+By using `params` in your `GET` method for this **API Route** you have access to the token string.
+
+So when a user visits the verification link with the token your app has access to this random string.
+
+Go to the verification link you sent to the previously signed up user, it is this link.
+
+<a href="http://localhost:5173/verify/i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd" target="_blank">http://localhost:5173/verify/i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd</a>
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/server_endpoint_get_request_params_token_details.png">
+
+You should have this output in your terminal now.
+
+```bash
+  VITE v4.4.9  ready in 901 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+{ token: 'token-string' }
+{ token: '12ab34cd' }
+{
+  token: 'i3wtfh8s1obm9phc5bcyrlj2qdd0uzrvqs3idv28qewrrvuaem5ycug34vs6xljqpfdxcsgx0uphchp9tv4eogbeht7jbdzafhg5kml76n48sg3w2fzvf5uzhhh8vhjd'
+}
+```
+
+### 7.3 Validate the token
