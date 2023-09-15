@@ -1846,12 +1846,25 @@ const transporter = nodemailer.createTransport({
 });
 
 // define a sendVerificationMessage function with parameters for the message
-export async function sendVerificationMessage(
-	to: string,
-	subject: string,
-	text: string,
-	html = ''
-) {
+export async function sendVerificationMessage(to: string, token: string) {
+	const subject = 'Awesome App - Verification Link';
+	const text = `
+Hello ${to}, please open on this verification link in your browser to verify your email address, thank you.
+	
+http://localhost:5173/verify/${token}
+
+Awesome App Team
+`;
+
+	const html = `
+Hello ${to},<br /><br />
+
+please click on this verification link to verify your email address, thank you.<br /><br />
+	
+<a href="http://localhost:5173/verify/${token}">Verify Your Email Address</a><br /><br />
+
+<strong>Awesome App Team</strong>
+`;
 	try {
 		const info = await transporter.sendMail({
 			from: EMAIL_AUTH_USER, // sender address
@@ -1884,6 +1897,7 @@ import { isValidEmail } from '$lib/server/isValidEmail';
 import { auth } from '$lib/server/lucia';
 import { generateEmailVerificationToken } from '$lib/server/token';
 import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+import { verificationMessageTemplate } from '$lib/server/message/verificationMessageTemplate';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -1930,25 +1944,8 @@ export const actions: Actions = {
 			const token = await generateEmailVerificationToken(user.userId);
 			console.log(token);
 
-			// send the newly created user an email message with the verification link
-			const subject = 'Awesome App - Verification Link';
-			const text = `
-Hello ${email}, please open on this verification link in your browser to verify your email address, thank you.
-			
-http://localhost:5173/verify/${token}
-
-Awesome App Team
-`;
-			const html = `
-Hello ${email},<br /><br />
-
-please click on this verification link to verify your email address, thank you.<br /><br />
-			
-<a href="http://localhost:5173/verify/${token}">Verify Your Email Address</a><br /><br />
-
-<strong>Awesome App Team</strong>
-`;
-			const message = await sendVerificationMessage(email, subject, text, html);
+			// send the user an email message with a verification link
+			const message = await sendVerificationMessage(email, token);
 			console.log(message);
 
 			// for now log the created user
@@ -1962,8 +1959,6 @@ please click on this verification link to verify your email address, thank you.<
 	}
 } satisfies Actions;
 ```
-
-Obviously the code is littered with the email plaintext and html content, you wil address this later.
 
 Now go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
 
