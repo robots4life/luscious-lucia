@@ -1823,6 +1823,8 @@ Let's send the newly created user an email with the verification link.
 
 Note that the created token for that user is of course part of the verification link.
 
+### 6.1 Create sendVerificationLink module
+
 Similar to the previous step, you are going to use a module for this functionality.
 
 Create a new file `sendVerificationLink.ts` in folder `src/lib/server/message`.
@@ -1869,7 +1871,9 @@ export async function sendVerificationMessage(
 }
 ```
 
-Now use this module in `+page.server.ts` file of the `signup` page.
+### 6.2 Use sendVerificationLink module on the Sign up page
+
+Now use this module in the `+page.server.ts` file of the `signup` page.
 
 **src/routes/signup/+page.server.ts**
 
@@ -2001,6 +2005,8 @@ Message sent: <d831726f-3e04-8a71-3fc5-b969bd7723c7@ethereal.email>
   userId: 'zedsn7uqc90yamd'
 }
 ```
+
+### 6.3 Check your Ethereal Messages to preview the Verification Email
 
 Go to your Ethereal messages <a href="https://ethereal.email/messages" target="_blank">https://ethereal.email/messages</a> and click on the email you just sent.
 
