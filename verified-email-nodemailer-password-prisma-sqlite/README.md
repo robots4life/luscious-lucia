@@ -741,7 +741,7 @@ Create a new file `lucia.ts` in the folder `src/lib/server`.
 
 We’ll expose the user’s `email` and `emailVerified` to the `User` object by defining `getUserAttributes`.
 
-Lucia will be responsible to track this `User` object throughout your app.
+**Lucia will be responsible to track this `User` object throughout your app.**
 
 Note that it is only on this `User` object where you can set the status of the user's email address, that is, if it is verified or not.
 
@@ -785,6 +785,8 @@ export type Auth = typeof auth;
 <a href="https://lucia-auth.com/getting-started/sveltekit#set-up-types" target="_blank">https://lucia-auth.com/getting-started/sveltekit#set-up-types</a>
 
 In your `src/app.d.ts` file, declare a `Lucia` namespace. The import path for `Auth` is where you initialized `lucia()`.
+
+Set the types for the user attributes you added to the Lucia configuration, `email` and `email_verified`.
 
 **src/app.d.ts**
 
@@ -2256,12 +2258,12 @@ So you get the token from the verification link and query / `findUnique()` your 
 
 ```ts
 const validateEmailVerificationToken = async (token: string) => {
-	const user = await prisma.emailToken.findUnique({
+	const tokenUser = await prisma.emailToken.findUnique({
 		where: {
 			id: token
 		}
 	});
-	console.log(user);
+	console.log(tokenUser);
 };
 ```
 
@@ -2282,16 +2284,16 @@ export const generateEmailVerificationToken = async (userId: string) => {
 };
 
 export const validateEmailVerificationToken = async (token: string) => {
-	const user = await prisma.emailToken.findUnique({
+	const tokenUser = await prisma.emailToken.findUnique({
 		where: {
 			id: token
 		}
 	});
-	// log the user
-	console.log(user);
+	// log the token from that user
+	console.log(tokenUser);
 
 	// you are returning a Promise here
-	return user;
+	return tokenUser;
 };
 ```
 
@@ -2308,10 +2310,10 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	// pass the token value that is available on the params object to the validateEmailVerificationToken function
 	// the returned value is a promise, so you need to await the result
-	const user = await validateEmailVerificationToken(params.token);
-	console.log(user);
+	const foundTokenUser = await validateEmailVerificationToken(params.token);
+	console.log(foundTokenUser);
 
-	const body = JSON.stringify(user?.user_id);
+	const body = JSON.stringify(foundTokenUser?.user_id);
 
 	// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
 	// new Response(body, options)
@@ -2376,13 +2378,13 @@ Click on the message.
 
 Open the verification link in a new browser tab.
 
-If the token is valid you will obtain the id of the user that this token belongs to.
+**If the token is valid you will obtain the id of the user that this token belongs to.**
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/verify_token_api_route_user_id.png">
 
 You should have output similar to this in your terminal..
 
-Note you are logging the `user` once in the `token.ts` module and once in the `+server.ts` **API Route** hence it is showing up twice in your terminal.
+Note you are logging the `tokenUser` once in the `token.ts` module and the `foundTokenUser` once in the `+server.ts` **API Route** hence it is showing up twice in your terminal.
 
 ```bash
 {
@@ -2410,7 +2412,7 @@ null
 null
 ```
 
-If the token cannot be found in the database you will receive a `null` value from the query. No user with that token can be found.
+If the token cannot be found in the database you will receive a `null` value from the query. This means that no user with that token can be found.
 
 ### 7.4 Verify User Email
 
@@ -2422,4 +2424,35 @@ On that user id you can change the verified status of the email address.
 
 The verification link was accessed from the email sent to that user, so the email address was verified.
 
-When you set up user management with Lucia
+When you set up user management with Lucia you defined the user attributes `email` and `email_verified`.
+
+To track the user throughout your app with Lucia you can now change the user attribute `email_verified` of that user.
+
+1. Get the user with Lucia
+
+```ts
+const user = await auth.getUser(userId);
+```
+
+2. Update the user attributes with Lucia
+
+```ts
+await auth.updateUserAttributes(user.userId, {
+	email_verified: true // `Number(true)` if stored as an integer
+});
+```
+
+3. Set a Session for the user with Lucia
+
+```ts
+const session = await auth.createSession({
+	userId: user.userId,
+	attributes: {}
+});
+```
+
+4. Set a cookie that holds the Session for the user with Lucia
+
+```ts
+locals.auth.setSession(session);
+```
