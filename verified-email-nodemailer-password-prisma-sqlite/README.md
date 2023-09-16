@@ -741,6 +741,12 @@ Create a new file `lucia.ts` in the folder `src/lib/server`.
 
 We’ll expose the user’s `email` and `emailVerified` to the `User` object by defining `getUserAttributes`.
 
+Lucia will be responsible to track this `User` object throughout your app.
+
+Note that it is only on this `User` object where you can set the status of the user's email address, that is, if it is verified or not.
+
+For this you use the user attributes, `email` and `emailVerified`.
+
 <a href="https://lucia-auth.com/basics/configuration#getuserattributes" target="_blank">https://lucia-auth.com/basics/configuration#getuserattributes</a>
 
 **src/lib/server/lucia.ts**
@@ -2394,7 +2400,7 @@ Note you are logging the `user` once in the `token.ts` module and once in the `+
 }
 ```
 
-Change the verification link in the browser tab by just 1 character and reload the page.
+Change the verification link in the browser tab by some characters and reload the page.
 
 You should have output similar to this in your terminal..
 
@@ -2404,6 +2410,16 @@ null
 null
 ```
 
-If the token cannot be found in the database you will receive a `null` value from the query. No user with that token can be found, the verification link is hence invalid.
+If the token cannot be found in the database you will receive a `null` value from the query. No user with that token can be found.
 
-## 8.0 Verify User Email
+### 7.4 Verify User Email
+
+Now that the token is valid and you have a `user_id` as relation to the `token` you can set the field `email_verified` of the `User` model to `true` for that same `user_id`.
+
+If the token is valid you get a user id back as relation.
+
+On that user id you can change the verified status of the email address.
+
+The verification link was accessed from the email sent to that user, so the email address was verified.
+
+When you set up user management with Lucia
