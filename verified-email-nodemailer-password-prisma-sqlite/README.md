@@ -554,7 +554,15 @@ The default Prisma schema for Lucia has a `User`, `Key` and `Session` model.
 
 <a href="https://lucia-auth.com/database-adapters/prisma#prisma-schema" target="_blank">https://lucia-auth.com/database-adapters/prisma#prisma-schema</a>
 
-For email verification you need a new Model `EmailToken`.
+For email verification you need a new Model `EmailToken`. That model should have an `id` field that will be the `token`, an `expires` field that will be the point in time when the token is not valid any more, and an `user_id` field that holds the id of the user for whom the token was generated.
+
+In the `EmailToken` model, this is a Prisma **relation** and means that the field `user_id` from the `EmailToken` model has a relation with the field `id` of the `User` model.
+
+With this relation you can link a specific token `token` to a specific `user`.
+
+```prisma
+ user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+```
 
 **prisma/schema.prisma**
 
@@ -1469,7 +1477,7 @@ const token_expires_at_this_time = current_time_in_milliseconds + token_expires_
 console.log('token_expires_at_this_time : ' + token_expires_at_this_time);
 ```
 
-Now that you have the token, the current time and the expires in time add these values to the EmailToken model in the database with Prisma.
+Now that you have the token, the current time and the expires in time, you add these values to the `EmailToken` model in the database with Prisma. The `id` on the `EmailToken` model is the `token`.
 
 ```ts
 const emailToken = await prisma.emailToken.create({
@@ -1619,6 +1627,10 @@ Feel free to check out the created tables in Prisma Studio.
 Have a look at the `EmailToken` Model.
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_emailtoken_details.png">
+
+You will see that the `user_id` field in the `EmailToken` model has the value as the `id` field in the `User` model.
+
+This is because you created a **relation** between the `User` model and the `EmailToken` model when you created the schema for Prisma in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#24-set-up-prisma-schema-for-email-verification" target="_blank">**2.4 Set up Prisma Schema for email verification**</a>.
 
 Well done, you created a new `User`, a new `Session` as well as a `token` for that `User` that `expires` at a certain point in time. :tada:
 
@@ -2165,10 +2177,10 @@ export const GET: RequestHandler = async ({ params }) => {
 
 Visit this page of your app now <a href="http://localhost:5173/verify/token-string" target="_blank">http://localhost:5173/verify/token-string</a>.
 
-You should see that the page returns
+You should see that the page returns a key value pair in an object.
 
-1. the name of the parameter as defined by the variable of the folder name in square brackets and
-2. the value of that variable
+1. the key is the name of the parameter as defined by the variable of the folder name in square brackets and
+2. the value is the value of that variable
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/server_endpoint_get_request_params.png">
 
@@ -2227,3 +2239,7 @@ You should have this output in your terminal now.
 ```
 
 ### 7.3 Validate the token
+
+Let's validate if the token provided through the verification link, the URL, belongs to a user that signed up to your app.
+
+For this you query the `EmailToken` model for an entry that
