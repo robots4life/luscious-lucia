@@ -1307,7 +1307,11 @@ locals.auth.setSession(session); // set session cookie
 
 Note that you are accessing the `locals` object where you stored the `auth` methods when creating the `hooks.server.ts` file in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#34-set-up-hooks-to-store-authrequest-on-the-localsauth-object" target="_blank">**3.4 Set up hooks to store Auth.request() on the locals.auth object**</a>.
 
-So to be able to access the `locals` object you need to add it as argument to the default form action function.
+So to be able to access the `locals` object you need to add it as parameter to the default form action function.
+
+You can unpack properties from objects passed as a function parameter. These properties may then be accessed within the function body.
+
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter" target="_blank">MDN reference Unpacking properties from objects passed as a function parameter -> https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter</a>
 
 ```ts
 default: async ({ request, locals }) =>
@@ -2123,7 +2127,7 @@ This means that you will need to create a **server endpoint** with a **dynamic p
 
 SvelteKit allows you to create more than just pages. You can also create **API route** or an **endpoint** or a **server endpoint** by adding a `+server.ts` file that exports functions corresponding to HTTP methods: **GET**, **PUT**, **POST**, **PATCH** and **DELETE**.
 
-<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods" target="_blank">MDN reference HTTP request methods -> https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods</a>
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods" target="_blank">MDN reference HTTP methods -> https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods</a>
 
 Create a new file **`+server.ts`** in the folder `src/routes/verify/`**[token]**.
 
@@ -2258,12 +2262,13 @@ So you get the token from the verification link and query / `findUnique()` your 
 
 ```ts
 const validateEmailVerificationToken = async (token: string) => {
-	const tokenUser = await prisma.emailToken.findUnique({
+	const userEmailToken = await prisma.emailToken.findUnique({
 		where: {
 			id: token
 		}
 	});
-	console.log(tokenUser);
+	// log the token from that user
+	console.log(userEmailToken);
 };
 ```
 
@@ -2284,16 +2289,16 @@ export const generateEmailVerificationToken = async (userId: string) => {
 };
 
 export const validateEmailVerificationToken = async (token: string) => {
-	const tokenUser = await prisma.emailToken.findUnique({
+	const userEmailToken = await prisma.emailToken.findUnique({
 		where: {
 			id: token
 		}
 	});
 	// log the token from that user
-	console.log(tokenUser);
+	console.log(userEmailToken);
 
 	// you are returning a Promise here
-	return tokenUser;
+	return userEmailToken;
 };
 ```
 
@@ -2414,27 +2419,28 @@ null
 
 If the token cannot be found in the database you will receive a `null` value from the query. This means that no user with that token can be found.
 
-### 7.4 Verify User Email
+## 8.0 Verify Email and Authenticate User
 
-Now that the token is valid and you have a `user_id` as relation to the `token` you can set the field `email_verified` of the `User` model to `true` for that same `user_id`.
+Now that the token is valid and you have a `user_id` as relation to the supplied `token` you can set the field `email_verified` of the `User` model to `true` for that same `user_id`.
 
 If the token is valid you get a user id back as relation.
-
 On that user id you can change the verified status of the email address.
-
 The verification link was accessed from the email sent to that user, so the email address was verified.
+
+However you are not using Prisma directly to change the values in the database.
+Note that you like to track the user throughout your app with Lucia and ideally also set a valid Session for that user throughout your app once the email address is verified.
 
 When you set up user management with Lucia you defined the user attributes `email` and `email_verified`.
 
-To track the user throughout your app with Lucia you can now change the user attribute `email_verified` of that user.
+To track the user throughout your app with Lucia and change the user attribute `email_verified` of that user do this.
 
-1. Get the user with Lucia
+**1. Get the user with Lucia.**
 
 ```ts
-const user = await auth.getUser(userId);
+const user = await auth.getUser(foundTokenUser?.user_id);
 ```
 
-2. Update the user attributes with Lucia
+**2. Update the user attribute `email_verified` of that user with Lucia.**
 
 ```ts
 await auth.updateUserAttributes(user.userId, {
@@ -2442,7 +2448,19 @@ await auth.updateUserAttributes(user.userId, {
 });
 ```
 
-3. Set a Session for the user with Lucia
+**3. Invalidate all other possible Sessions of that user with Lucia.**
+
+Note, when the user signs up you did create a Session for the user in the default form action of the `signup` page.
+
+To have only one unique Session for any given user you need to invalidate all other Sessions of that user.
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions</a>
+
+```ts
+await auth.invalidateAllUserSessions(user.userId);
+```
+
+**4. Set a new Session for that user with Lucia after you have updated the user attribute `email_verified`.**
 
 ```ts
 const session = await auth.createSession({
@@ -2451,8 +2469,74 @@ const session = await auth.createSession({
 });
 ```
 
-4. Set a cookie that holds the Session for the user with Lucia
+**5. Set a cookie that holds the new Session for that user with Lucia.**
+
+https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#45-create-a-new-session-for-the-new-user
+
+Remember, when you create a new Session for a user like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#45-create-a-new-session-for-the-new-user" target="_blank">**4.5 Create a new Session for the new User**</a> you will access the `locals` object where you stored the `auth` methods when creating the `hooks.server.ts` file in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#34-set-up-hooks-to-store-authrequest-on-the-localsauth-object" target="_blank">**3.4 Set up hooks to store Auth.request() on the locals.auth object**</a>.
+
+You can unpack properties from objects passed as a function parameter. These properties may then be accessed within the function body.
+
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter" target="_blank">MDN reference Unpacking properties from objects passed as a function parameter -> https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter</a>
+
+So to be able to access the `locals` object you need to add it as parameter to the `GET` method of this token **API Route**.
+
+Destructure `locals` from function parameter.
+
+```ts
+export const GET: RequestHandler = async ({ params, locals }) => { ...
+```
+
+Access `locals` object and any method on it, inside the `GET` function in the `+server.ts` file.
 
 ```ts
 locals.auth.setSession(session);
+```
+
+**src/routes/verify/[token]/+server.ts**
+
+```ts
+import type { RequestHandler } from './$types';
+import { validateEmailVerificationToken } from '$lib/server/token';
+import { auth } from '$lib/server/lucia';
+
+export const GET: RequestHandler = async ({ params, locals }) => {
+	console.log(params);
+
+	try {
+		// pass the token value that is available on the params object to the validateEmailVerificationToken function
+		// the returned value is a promise, so you need to await the result
+		const foundTokenUser = await validateEmailVerificationToken(params.token);
+		console.log(foundTokenUser);
+
+		// 1. Get the user with Lucia
+		const user = await auth.getUser(foundTokenUser?.user_id);
+
+		// 2. Update the user attribute
+		await auth.updateUserAttributes(user.userId, {
+			email_verified: true // `Number(true)` if stored as an integer
+		});
+
+		// 3. Invalidate all other possible Sessions of that user with Lucia
+		await auth.invalidateAllUserSessions(user.userId);
+
+		// 4. Set a new Session for that user with Lucia
+		const session = await auth.createSession({
+			userId: user.userId,
+			attributes: {}
+		});
+
+		// 5. Set a cookie that holds the new Session for that user with Lucia
+		locals.auth.setSession(session);
+
+		const body = JSON.stringify(foundTokenUser?.user_id);
+
+		// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
+		// new Response(body, options)
+		return new Response(body);
+	} catch (error) {
+		console.log(error);
+		return new Response(JSON.stringify(error));
+	}
+};
 ```
