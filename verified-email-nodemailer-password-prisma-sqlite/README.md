@@ -2179,8 +2179,10 @@ Visit this page of your app now <a href="http://localhost:5173/verify/token-stri
 
 You should see that the page returns a key value pair in an object.
 
-1. the key is the name of the parameter as defined by the variable of the folder name in square brackets and
+1. the key is the name of the parameter as defined by the variable of the folder name in square brackets, so src/routes/verify/**[token]**
 2. the value is the value of that variable
+
+So `params.token` is the value of the token in the `params` object.
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/server_endpoint_get_request_params.png">
 
@@ -2240,6 +2242,168 @@ You should have this output in your terminal now.
 
 ### 7.3 Validate the token
 
-Let's validate if the token provided through the verification link, the URL, belongs to a user that signed up to your app.
+Let's validate / check if the token provided through the verification link, the URL, belongs to an user that signed up to your app.
 
-For this you query the `EmailToken` model for an entry that
+For this you query the `EmailToken` model and in it the field `id` for an entry that has the same value as the `parameter` you obtain from the `API route` that deals with the verification link.
+
+So you get the token from the verification link and query / `findUnique()` your database, in it the `EmailToken` model where you pass that `token` to the field `id`.
+
+```ts
+const validateEmailVerificationToken = async (token: string) => {
+	const user = await prisma.emailToken.findUnique({
+		where: {
+			id: token
+		}
+	});
+	console.log(user);
+};
+```
+
+You can use the `token.ts` module for the function and export it from there to make it available in your app.
+
+Add this code to the `token.ts` module.
+
+**src/lib/server/token.ts**
+
+```ts
+import { generateRandomString } from 'lucia/utils';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
+export const generateEmailVerificationToken = async (userId: string) => {
+	// create a new token
+	...
+};
+
+export const validateEmailVerificationToken = async (token: string) => {
+	const user = await prisma.emailToken.findUnique({
+		where: {
+			id: token
+		}
+	});
+	// log the user
+	console.log(user);
+
+	// you are returning a Promise here
+	return user;
+};
+```
+
+Import this module in the `API route` for the verification link.
+
+**src/routes/verify/[token]/+server.ts**
+
+```ts
+import type { RequestHandler } from './$types';
+import { validateEmailVerificationToken } from '$lib/server/token';
+
+export const GET: RequestHandler = async ({ params }) => {
+	console.log(params);
+
+	// pass the token value that is available on the params object to the validateEmailVerificationToken function
+	// the returned value is a promise, so you need to await the result
+	const user = await validateEmailVerificationToken(params.token);
+	console.log(user);
+
+	const body = JSON.stringify(user?.user_id);
+
+	// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
+	// new Response(body, options)
+	return new Response(body);
+};
+```
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+You should have output similar to this in your terminal..
+
+```bash
+conner.white16@ethereal.email
+0123456789876543210
+token : ksvsnr95i4gkszr61nfwmxvnv98jy77vo8t44darl3t6mtnrjocaoshg4c6or8f23vbigtf9se5dgk6ynn55pc7k5cdw48lj52z3zq6xxbd74omz2eqahkmh6xege4bf
+token_expires_in_time : 7200000
+current_time_in_milliseconds : 1694868088929
+token_expires_at_this_time : 1694875288929
+{
+  id: 'ksvsnr95i4gkszr61nfwmxvnv98jy77vo8t44darl3t6mtnrjocaoshg4c6or8f23vbigtf9se5dgk6ynn55pc7k5cdw48lj52z3zq6xxbd74omz2eqahkmh6xege4bf',
+  expires: 1694875288929n,
+  user_id: 'cgxmgs08ej7i7xq'
+}
+ksvsnr95i4gkszr61nfwmxvnv98jy77vo8t44darl3t6mtnrjocaoshg4c6or8f23vbigtf9se5dgk6ynn55pc7k5cdw48lj52z3zq6xxbd74omz2eqahkmh6xege4bf
+Message sent: <adcaf1b6-7b62-024d-dc06-112497b638b6@ethereal.email>
+{
+  accepted: [ 'conner.white16@ethereal.email' ],
+  rejected: [],
+  ehlo: [ 'PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH LOGIN PLAIN' ],
+  envelopeTime: 124,
+  messageTime: 137,
+  messageSize: 1348,
+  response: '250 Accepted [STATUS=new MSGID=ZQFaVM2l51sVUMSAZQWiec.vdLF4S-Q.AAAALoJML7EcJDSX81a6j7JTjaQ]',
+  envelope: {
+    from: 'conner.white16@ethereal.email',
+    to: [ 'conner.white16@ethereal.email' ]
+  },
+  messageId: '<adcaf1b6-7b62-024d-dc06-112497b638b6@ethereal.email>'
+}
+{
+  email: 'conner.white16@ethereal.email',
+  emailVerified: false,
+  userId: 'cgxmgs08ej7i7xq'
+}
+```
+
+Go to your Ethereal messages <a href="https://ethereal.email/messages" target="_blank">https://ethereal.email/messages</a> and click on the email you just sent.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/etherreal_verification_link_messages.png">
+
+Click on the message.
+
+**HTML**
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_verification_link_message_html_details.png">
+
+**Plaintext**
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_verification_link_message_plaintext_details.png">
+
+Open the verification link in a new browser tab.
+
+If the token is valid you will obtain the id of the user that this token belongs to.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/verify_token_api_route_user_id.png">
+
+You should have output similar to this in your terminal..
+
+Note you are logging the `user` once in the `token.ts` module and once in the `+server.ts` **API Route** hence it is showing up twice in your terminal.
+
+```bash
+{
+  token: 'ksvsnr95i4gkszr61nfwmxvnv98jy77vo8t44darl3t6mtnrjocaoshg4c6or8f23vbigtf9se5dgk6ynn55pc7k5cdw48lj52z3zq6xxbd74omz2eqahkmh6xege4bf'
+}
+{
+  id: 'ksvsnr95i4gkszr61nfwmxvnv98jy77vo8t44darl3t6mtnrjocaoshg4c6or8f23vbigtf9se5dgk6ynn55pc7k5cdw48lj52z3zq6xxbd74omz2eqahkmh6xege4bf',
+  expires: 1694875288929n,
+  user_id: 'cgxmgs08ej7i7xq'
+}
+{
+  id: 'ksvsnr95i4gkszr61nfwmxvnv98jy77vo8t44darl3t6mtnrjocaoshg4c6or8f23vbigtf9se5dgk6ynn55pc7k5cdw48lj52z3zq6xxbd74omz2eqahkmh6xege4bf',
+  expires: 1694875288929n,
+  user_id: 'cgxmgs08ej7i7xq'
+}
+```
+
+Change the verification link in the browser tab by just 1 character and reload the page.
+
+You should have output similar to this in your terminal..
+
+```bash
+{ token: 'ksvsnr95i' }
+null
+null
+```
+
+If the token cannot be found in the database you will receive a `null` value from the query. No user with that token can be found, the verification link is hence invalid.
+
+## 8.0 Verify User Email

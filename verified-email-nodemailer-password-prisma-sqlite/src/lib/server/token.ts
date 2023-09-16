@@ -33,3 +33,16 @@ export const generateEmailVerificationToken = async (userId: string) => {
 	// you are returning a Promise here
 	return token;
 };
+
+export const validateEmailVerificationToken = async (token: string) => {
+	const user = await prisma.emailToken.findUnique({
+		where: {
+			id: token
+		}
+	});
+	// log the user
+	console.log(user);
+
+	// you are returning a Promise here
+	return user;
+};
