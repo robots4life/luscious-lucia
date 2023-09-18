@@ -12,23 +12,28 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		console.log(foundTokenUser);
 
 		// 1. Get the user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser
 		const user = await auth.getUser(foundTokenUser?.user_id);
 
 		// 2. Update the user attribute
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
 		await auth.updateUserAttributes(user.userId, {
 			email_verified: true // `Number(true)` if stored as an integer
 		});
 
 		// 3. Invalidate all other possible Sessions of that user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions
 		await auth.invalidateAllUserSessions(user.userId);
 
 		// 4. Set a new Session for that user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession
 		const session = await auth.createSession({
 			userId: user.userId,
 			attributes: {}
 		});
 
 		// 5. Set a cookie that holds the new Session for that user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
 		locals.auth.setSession(session);
 
 		const body = JSON.stringify(foundTokenUser?.user_id);

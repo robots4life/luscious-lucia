@@ -1646,7 +1646,7 @@ This is because you created a **relation** between the `User` model and the `Ema
 
 Well done, you created a new `User`, a new `Session` as well as a `token` for that `User` that `expires` at a certain point in time. :tada:
 
-### 5.2 Refactor creating a new Token
+### 5.2 Turn `generateEmailVerificationToken` function into a module
 
 Having all the logic to create a new token in the default form action for the `signup` page is not OK. As you will see later you are also going to need more logic related to creating and validating tokens. So let's turn the token generation into a module.
 
@@ -1847,7 +1847,7 @@ Let's send the newly created user an email with the verification link.
 
 Note that the created token for that user is of course part of the verification link.
 
-### 6.1 Create sendVerificationLink module
+### 6.1 Create `sendVerificationLink` module
 
 Similar to the previous step, you are going to use a module for this functionality.
 
@@ -1908,7 +1908,7 @@ please click on this verification link to verify your email address, thank you.<
 }
 ```
 
-### 6.2 Use sendVerificationLink module on the Sign up page
+### 6.2 Use `sendVerificationLink` module on the Sign up page
 
 Now use this module in the `+page.server.ts` file of the `signup` page.
 
@@ -2419,7 +2419,7 @@ null
 
 If the token cannot be found in the database you will receive a `null` value from the query. This means that no user with that token can be found.
 
-## 8.0 Verify Email and Authenticate User
+### 7.4 Verify Email and Authenticate User
 
 Now that the token is valid and you have a `user_id` as relation to the supplied `token` you can set the field `email_verified` of the `User` model to `true` for that same `user_id`.
 
@@ -2436,11 +2436,15 @@ To track the user throughout your app with Lucia and change the user attribute `
 
 **1. Get the user with Lucia.**
 
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser</a>
+
 ```ts
 const user = await auth.getUser(foundTokenUser?.user_id);
 ```
 
 **2. Update the user attribute `email_verified` of that user with Lucia.**
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes</a>
 
 ```ts
 await auth.updateUserAttributes(user.userId, {
@@ -2462,6 +2466,8 @@ await auth.invalidateAllUserSessions(user.userId);
 
 **4. Set a new Session for that user with Lucia after you have updated the user attribute `email_verified`.**
 
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession</a>
+
 ```ts
 const session = await auth.createSession({
 	userId: user.userId,
@@ -2471,7 +2477,7 @@ const session = await auth.createSession({
 
 **5. Set a cookie that holds the new Session for that user with Lucia.**
 
-https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#45-create-a-new-session-for-the-new-user
+<a href="https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession</a>
 
 Remember, when you create a new Session for a user like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#45-create-a-new-session-for-the-new-user" target="_blank">**4.5 Create a new Session for the new User**</a> you will access the `locals` object where you stored the `auth` methods when creating the `hooks.server.ts` file in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#34-set-up-hooks-to-store-authrequest-on-the-localsauth-object" target="_blank">**3.4 Set up hooks to store Auth.request() on the locals.auth object**</a>.
 
@@ -2510,23 +2516,28 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		console.log(foundTokenUser);
 
 		// 1. Get the user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser
 		const user = await auth.getUser(foundTokenUser?.user_id);
 
 		// 2. Update the user attribute
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
 		await auth.updateUserAttributes(user.userId, {
 			email_verified: true // `Number(true)` if stored as an integer
 		});
 
 		// 3. Invalidate all other possible Sessions of that user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions
 		await auth.invalidateAllUserSessions(user.userId);
 
 		// 4. Set a new Session for that user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession
 		const session = await auth.createSession({
 			userId: user.userId,
 			attributes: {}
 		});
 
 		// 5. Set a cookie that holds the new Session for that user with Lucia
+		// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
 		locals.auth.setSession(session);
 
 		const body = JSON.stringify(foundTokenUser?.user_id);
@@ -2540,3 +2551,21 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 };
 ```
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+Open your browser Development Tools and have a look at the value of the Session cookie that was set.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/previous_session_cookie_value.png">
+
+Now go to the new Ethereal message and open the new verification link in the same tab where you currently have the Development Tools open.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/current_session_cookie_value.png">
+
+You can observe the value of the Session cookie has changed and a new Session was set for the user that now has a verified email address.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_user_new_session_email_verified_true.png">
+
+If you reload this same tab with the verification link you can observe the Session cookie value keeps changing.
