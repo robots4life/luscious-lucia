@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 export async function sendVerificationMessage(to: string, token: string) {
 	const subject = 'Awesome App - Verification Link';
 	const text = `
-Hello ${to}, please open on this verification link in your browser to verify your email address, thank you.
+Hello ${to}, please open this verification link in your browser to verify your email address, thank you.
 	
 http://localhost:5173/verify/${token}
 
