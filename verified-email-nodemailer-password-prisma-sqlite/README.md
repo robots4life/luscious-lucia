@@ -311,11 +311,9 @@ const transporter = nodemailer.createTransport({
 });
 ```
 
-You can access these private environment variables only on server-side code, to use them, simply import them in the files where you need to access them.
+Note, when you close your browser or loose the current browser session you can get back to the email address you created with Ethereal by just signing in to your account.
 
-```ts
-import { EMAIL_HOST, EMAIL_PORT, EMAIL_AUTH_USER, EMAIL_AUTH_PASS } from '$env/static/private';
-```
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/ethereal_account_signin_with_details.png">
 
 ### 1.4 Store Ethereal email test account details in your private environment file
 
@@ -2569,3 +2567,5 @@ You can observe the value of the Session cookie has changed and a new Session wa
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_user_new_session_email_verified_true.png">
 
 If you reload this same tab with the verification link you can observe the Session cookie value keeps changing.
+
+## 8.0 Handle User Sign Up Flow
