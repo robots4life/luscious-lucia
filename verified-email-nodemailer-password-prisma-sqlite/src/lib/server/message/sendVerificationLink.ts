@@ -25,7 +25,7 @@ Awesome App Team
 	const html = `
 Hello ${to},<br /><br />
 
-please click on this verification link to verify your email address, thank you.<br /><br />
+please click this verification link to verify your email address, thank you.<br /><br />
 	
 <a href="http://localhost:5173/verify/${token}">Verify Your Email Address</a><br /><br />
 

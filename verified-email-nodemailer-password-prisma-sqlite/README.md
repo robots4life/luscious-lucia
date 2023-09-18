@@ -1871,7 +1871,7 @@ const transporter = nodemailer.createTransport({
 export async function sendVerificationMessage(to: string, token: string) {
 	const subject = 'Awesome App - Verification Link';
 	const text = `
-Hello ${to}, please open on this verification link in your browser to verify your email address, thank you.
+Hello ${to}, please open this verification link in your browser to verify your email address, thank you.
 	
 http://localhost:5173/verify/${token}
 
@@ -1881,7 +1881,7 @@ Awesome App Team
 	const html = `
 Hello ${to},<br /><br />
 
-please click on this verification link to verify your email address, thank you.<br /><br />
+please click this verification link to verify your email address, thank you.<br /><br />
 	
 <a href="http://localhost:5173/verify/${token}">Verify Your Email Address</a><br /><br />
 
@@ -2584,14 +2584,14 @@ Let's start thinking about user flow in your app..
 
 When a new user signs up to your app..
 
-1. Visit home page
+1. Visit Home page
 2. Click Sign up link
-3. Sign up
-4. Redirect user to verify page
+3. Submit Sign up form
+4. Redirect user to Verify page
 5. What happens with this open tab ?
 
 6. Open email message
 7. Click verification link
 8. Open new browser tab with verification link
 9. If the token is valid verify email address
-10. Redirect user to their profile page
+10. Redirect user to their Profile page
