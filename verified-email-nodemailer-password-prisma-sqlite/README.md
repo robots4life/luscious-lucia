@@ -1309,7 +1309,7 @@ So to be able to access the `locals` object you need to add it as parameter to t
 
 You can unpack properties from objects passed as a function parameter. These properties may then be accessed within the function body.
 
-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter" target="_blank">MDN reference Unpacking properties from objects passed as a function parameter -> https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter</a>
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter" target="_blank">MDN reference -> Unpacking properties from objects passed as a function parameter</a>
 
 ```ts
 default: async ({ request, locals }) =>
@@ -1443,7 +1443,7 @@ During the sign up process this sequence of random numbers, the `token`, will al
 
 Once the user opens the email message and clicks on the verification link, the token will be available as query parameter of the page that does the verification.
 
-<a href="https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams" target="_blank">MDN reference query parameters -> https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams</a>
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams" target="_blank">MDN reference -> query parameters</a>
 
 If the token that is received as query parameter on the verification page is the same as the token that was created during sign up of the new user in the database, we can be sure that the user opened the email message and clicked on the verification link.
 
@@ -1694,7 +1694,7 @@ Create a new file `token.ts` in the folder `src/lib/server/token`.
 
 Copy the function to that `token.ts` file and export it from the module.
 
-<a href="https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export" target="_blank">MDN reference export -> https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export</a>
+<a href="https://developer.mozilla.org/en-US/docs/web/javascript/reference/statements/export" target="_blank">MDN reference -> export</a>
 
 Again, make sure that you also import the utility function `generaterandomstring()` from `lucia/utils` as well as the `PrismaClient` client from `@prisma/client`.
 
@@ -2125,7 +2125,7 @@ This means that you will need to create a **server endpoint** with a **dynamic p
 
 SvelteKit allows you to create more than just pages. You can also create **API route** or an **endpoint** or a **server endpoint** by adding a `+server.ts` file that exports functions corresponding to HTTP methods: **GET**, **PUT**, **POST**, **PATCH** and **DELETE**.
 
-<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods" target="_blank">MDN reference HTTP methods -> https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods</a>
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods" target="_blank">MDN reference -> HTTP methods</a>
 
 Create a new file **`+server.ts`** in the folder `src/routes/verify/`**[token]**.
 
@@ -2481,7 +2481,7 @@ Remember, when you create a new Session for a user like you did in this step <a 
 
 You can unpack properties from objects passed as a function parameter. These properties may then be accessed within the function body.
 
-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter" target="_blank">MDN reference Unpacking properties from objects passed as a function parameter -> https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter</a>
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#unpacking_properties_from_objects_passed_as_a_function_parameter" target="_blank">MDN reference -> Unpacking properties from objects passed as a function parameter</a>
 
 So to be able to access the `locals` object you need to add it as parameter to the `GET` method of this token **API Route**.
 
