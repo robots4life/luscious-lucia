@@ -2513,36 +2513,43 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const foundTokenUser = await validateEmailVerificationToken(params.token);
 		console.log(foundTokenUser);
 
-		// 1. Get the user with Lucia
-		// https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser
-		const user = await auth.getUser(foundTokenUser?.user_id);
+		const foundTokenUser = await validateEmailVerificationToken(params.token);
+		console.log(foundTokenUser);
 
-		// 2. Update the user attribute
-		// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
-		await auth.updateUserAttributes(user.userId, {
-			email_verified: true // `Number(true)` if stored as an integer
-		});
+		// check if a user with that token exists
+		if (foundTokenUser) {
+			// 1. Get the user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser
+			const user = await auth.getUser(foundTokenUser?.user_id);
+			// 2. Update the user attribute
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
+			await auth.updateUserAttributes(user.userId, {
+				email_verified: true // `Number(true)` if stored as an integer
+			});
 
-		// 3. Invalidate all other possible Sessions of that user with Lucia
-		// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions
-		await auth.invalidateAllUserSessions(user.userId);
+			// 3. Invalidate all other possible Sessions of that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions
+			await auth.invalidateAllUserSessions(user.userId);
 
-		// 4. Set a new Session for that user with Lucia
-		// https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession
-		const session = await auth.createSession({
-			userId: user.userId,
-			attributes: {}
-		});
+			// 4. Set a new Session for that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
 
-		// 5. Set a cookie that holds the new Session for that user with Lucia
-		// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
-		locals.auth.setSession(session);
+			// 5. Set a cookie that holds the new Session for that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
+			locals.auth.setSession(session);
 
-		const body = JSON.stringify(foundTokenUser?.user_id);
+			const body = JSON.stringify(foundTokenUser?.user_id);
 
-		// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
-		// new Response(body, options)
-		return new Response(body);
+			// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
+			// new Response(body, options)
+			return new Response(body);
+		}
+
+		return new Response('invalid token');
 	} catch (error) {
 		console.log(error);
 		return new Response(JSON.stringify(error));
