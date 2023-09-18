@@ -44,6 +44,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			return new Response(body);
 		}
 
+		// if the user with that token cannot be found return an error message
 		return new Response('invalid token');
 	} catch (error) {
 		console.log(error);

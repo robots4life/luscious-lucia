@@ -2549,6 +2549,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			return new Response(body);
 		}
 
+		// if the user with that token cannot be found return an error message
 		return new Response('invalid token');
 	} catch (error) {
 		console.log(error);
@@ -2574,5 +2575,9 @@ You can observe the value of the Session cookie has changed and a new Session wa
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_new_user_new_session_email_verified_true.png">
 
 If you reload this same tab with the verification link you can observe the Session cookie value keeps changing.
+
+You now have a user with a valid Session, a session cookie set and their email address is verified. However you are now still on the page, the **API Route**, `/verify/[token]` and are returning the found user id.
+
+Let's start thinking about user flow in your app..
 
 ## 8.0 Handle User Sign Up Flow
