@@ -2583,3 +2583,7 @@ However you are now still on the `/verify/[token]` page, the **API Route** and a
 Let's start thinking about user flow in your app..
 
 ## 8.0 Handle User Flow
+
+<a href="https://stately.ai/registry/editor/d8c54868-4dbd-4806-a2cd-bc1662671a07?machineId=680e35e2-094b-4757-ad97-79a7922b592f&mode=Simulate" target="_blank">Simulate User Flow</a>
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/user_flow.png">
