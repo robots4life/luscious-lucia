@@ -3057,7 +3057,7 @@ declare global {
 export {};
 ```
 
-4. on the `signup` page, where the user has so far not finished signing in to your app set the `create_at` field value to the number 0
+4. on the `signup` page, where the user has so far not finished signing in to your app set the `created_at` field value to the number 0
 
 **src/routes/signup/+page.server.ts**
 
