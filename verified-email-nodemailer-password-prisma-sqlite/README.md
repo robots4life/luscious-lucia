@@ -2586,7 +2586,7 @@ Let's start thinking about user flow in your app..
 
 Have a look at this simulated user flow, click through the various transitions and think about what this means for your app.
 
-<a href="https://stately.ai/registry/editor/d8c54868-4dbd-4806-a2cd-bc1662671a07?machineId=680e35e2-094b-4757-ad97-79a7922b592f&mode=Simulate" target="_blank">Simulate User Flow</a>
+<a href="https://stately.ai/registry/editor/d8c54868-4dbd-4806-a2cd-bc1662671a07?machineId=680e35e2-094b-4757-ad97-79a7922b592f&mode=Simulate" target="_blank">Simulated User Flow</a>
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/user_flow.png">
 
