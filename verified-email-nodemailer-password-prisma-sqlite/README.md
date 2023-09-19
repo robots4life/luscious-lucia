@@ -3306,7 +3306,7 @@ If the verification link is correct you are redirected to the `profile` page.
 
 You should have output similar to this in your terminal..
 
-Note, you name have the additional `createdAt` value on your session.
+Note, you now have the additional `createdAt` value on your session.
 
 ```bash
 {
