@@ -34,6 +34,7 @@ model Session {
   user_id        String
   active_expires BigInt
   idle_expires   BigInt
+  created_at     BigInt // <== add a new field, created_at, as session attribute
   user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])

@@ -11,9 +11,7 @@
 <hr />
 
 <h2>Account Details</h2>
-<p>
-	Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem nisi error voluptatum,
-	nemo unde non minus officia dolorum! Incidunt, ullam!
-</p>
 
 <pre>{JSON.stringify(data, null, 2)}</pre>
+
+<p>Signed In At : {new Date(data.signedInAt)}</p>

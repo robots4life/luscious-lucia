@@ -42,7 +42,10 @@ export const actions: Actions = {
 
 			const session = await auth.createSession({
 				userId: user.userId,
-				attributes: {}
+				attributes: {
+					// set this field to 0 since the new user has so far not verified their email address and hence also not signed in to your app
+					created_at: 0
+				}
 			});
 			locals.auth.setSession(session); // set session cookie
 

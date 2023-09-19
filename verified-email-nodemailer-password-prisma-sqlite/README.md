@@ -2446,7 +2446,7 @@ const user = await auth.getUser(foundTokenUser?.user_id);
 
 ```ts
 await auth.updateUserAttributes(user.userId, {
-	email_verified: true // `Number(true)` if stored as an integer
+	email_verified: true // Number(true) if stored as an integer
 });
 ```
 
@@ -2524,7 +2524,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			// 2. Update the user attribute
 			// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
 			await auth.updateUserAttributes(user.userId, {
-				email_verified: true // `Number(true)` if stored as an integer
+				email_verified: true // Number(true) if stored as an integer
 			});
 
 			// 3. Invalidate all other possible Sessions of that user with Lucia
@@ -2754,19 +2754,17 @@ Create a `+page.svelte` file in the folder `src/routes/profile`. Export the `dat
 <hr />
 
 <h2>Account Details</h2>
-<p>
-	Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem nisi error voluptatum,
-	nemo unde non minus officia dolorum! Incidunt, ullam!
-</p>
 
 <pre>{JSON.stringify(data, null, 2)}</pre>
 ```
 
 #### 8.1.4 Redirect the new User with verified email address and authenticated session to profile page
 
-Remember, you are now still on the /verify/[token] page now, the API Route and are returning the found user id.
+Remember, you are now still on the /verify/[token] page now, the API Route and are returning the found user id. The user just pasted the verification link from the email message in this browser tab.
 
 Now you are going to redirect the user from this **API Route** to the `profile` page.
+
+In **API routes** you cannot use SvelteKit's `redirect` function. Instead you use the `Response` object to redirect the user to the profile page.
 
 **src/routes/verify/[token]/+server.ts**
 
@@ -2792,7 +2790,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			// 2. Update the user attribute
 			// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
 			await auth.updateUserAttributes(user.userId, {
-				email_verified: true // `Number(true)` if stored as an integer
+				email_verified: true // Number(true) if stored as an integer
 			});
 
 			// 3. Invalidate all other possible Sessions of that user with Lucia
@@ -2809,12 +2807,6 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			// 5. Set a cookie that holds the new Session for that user with Lucia
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
 			locals.auth.setSession(session);
-
-			// const body = JSON.stringify(foundTokenUser?.user_id);
-
-			// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
-			// new Response(body, options)
-			// return new Response(body);
 
 			// you cannot use SvelteKit's redirect function in an API route
 			// use the Response object to redirect the user to the profile page
@@ -2834,3 +2826,504 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 };
 ```
+
+#### 8.1.5 Load data for the profile page
+
+Note that you just verified this new user's email address, created a new Session for the user and set a session cookie in the browser with this user's session stored in it.
+
+You now have a fully authenticated user and can show user details on the profile page.
+
+Create a new file `+page.server.ts` in the folder `src/routes/profile`.
+
+In the `load` function for this page you want to check for several cases.
+
+1. if there is a session and if the session holds a user with a verified email address
+2. if there is a session and the session DOES NOT not hold a user with a verified email address
+3. all other cases
+
+**src/routes/profile/+page.server.ts**
+
+```ts
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+
+	// 1. if there is a session and if the session holds a user with a verified email address
+	if (session && session.user.emailVerified) {
+		console.log(session);
+
+		// return the user data stored on the session
+		return {
+			userId: session.user.userId,
+			email: session.user.email
+		};
+	}
+	// 2. if there is a session and the session DOES NOT not hold a user with a verified email address
+	if (session && !session.user.emailVerified) {
+		// redirect the user back to verify page
+		throw redirect(302, '/verify');
+	}
+	// 3. redirect all other cases to the app index page for now
+	throw redirect(302, '/');
+};
+```
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+On the `verify` page paste in the verification link.
+
+If the verification link is correct you are redirected to the `profile` page.
+
+You should have output similar to this in your terminal..
+
+```bash
+{
+  user: {
+    email: 'conner.white16@ethereal.email',
+    emailVerified: true,
+    userId: 's9t6qvo7mw43phc'
+  },
+  sessionId: '5nchxr3yokmc5nip60oj3a9975loptuspxrpaaw2',
+  activePeriodExpiresAt: 2023-09-20T14:31:01.377Z,
+  idlePeriodExpiresAt: 2023-10-04T14:31:01.377Z,
+  state: 'active',
+  fresh: false
+}
+```
+
+Your `profile` page should show the personal user data, similar to this..
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/profile_page_details.png">
+
+#### 8.1.6 Add additional session data for the User
+
+For the sake of it, let's just quickly add some more session data for the user to show on the `profile` page.
+
+You are going to show the exact date and time when the user has signed in to your app on the `profile` page.
+
+For this you will need to..
+
+1. change your Prisma Schema to include a `created_at` field in the `Session` model.
+
+**prisma/schema.prisma**
+
+```prisma
+model Session {
+  id             String @id @unique
+  user_id        String
+  active_expires BigInt
+  idle_expires   BigInt
+  created_at     BigInt // <== add a new field, created_at, as session attribute
+  user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+```
+
+**prisma/schema.prisma**
+
+```prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// https://lucia-auth.com/database-adapters/prisma#prisma-schema
+model User {
+  id             String       @id @unique
+  email          String       @unique // <== make sure to add email and
+  email_verified Boolean // <== email_verified as User attributes !!
+  auth_session   Session[]
+  key            Key[]
+  EmailToken     EmailToken[]
+}
+
+model Key {
+  id              String  @id @unique
+  hashed_password String?
+  user_id         String
+  user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Session {
+  id             String @id @unique
+  user_id        String
+  active_expires BigInt
+  idle_expires   BigInt
+  created_at     BigInt // <== add a new field, created_at, as session attribute
+  user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model EmailToken {
+  id      String @id @unique
+  expires BigInt
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+```
+
+2. add the new field as session attribute in your Lucia configuration
+   <a href="https://lucia-auth.com/basics/configuration/#getsessionattributes" target="_blank">https://lucia-auth.com/basics/configuration/#getsessionattributes</a>
+
+**src/lib/server/lucia.ts**
+
+```ts
+import { lucia } from 'lucia';
+import { sveltekit } from 'lucia/middleware';
+import { dev } from '$app/environment';
+import { prisma } from '@lucia-auth/adapter-prisma';
+import { PrismaClient } from '@prisma/client';
+
+const client = new PrismaClient();
+
+export const auth = lucia({
+	env: dev ? 'DEV' : 'PROD',
+	middleware: sveltekit(),
+	adapter: prisma(client, {
+		user: 'user', // model User {}
+		key: 'key', // model Key {}
+		session: 'session' // model Session {}
+	}),
+	getUserAttributes: (data) => {
+		return {
+			email: data.email,
+			// Boolean(data.email_verified) if stored as an integer
+			emailVerified: data.email_verified
+		};
+	},
+	getSessionAttributes: (databaseSession) => {
+		return {
+			createdAt: databaseSession.created_at
+		};
+	}
+});
+
+export type Auth = typeof auth;
+```
+
+3. add the types for the new session attribute to your type configuration for Lucia
+
+**src/app.d.ts**
+
+```ts
+// See https://kit.svelte.dev/docs/types#app
+// for information about these interfaces
+
+// https://lucia-auth.com/getting-started/sveltekit#set-up-types
+declare global {
+	namespace App {
+		// interface Error {}
+		interface Locals {
+			auth: import('lucia').AuthRequest;
+		}
+		// interface PageData {}
+		// interface Platform {}
+	}
+}
+
+/// <reference types="lucia" />
+declare global {
+	namespace Lucia {
+		type Auth = import('$lib/server/lucia').Auth;
+		type DatabaseUserAttributes = {
+			// required Prisma Schema fields (i.e. id) should not be defined here
+			email: string;
+			email_verified: boolean;
+		};
+		// type DatabaseSessionAttributes = Record<string, never>;
+		type DatabaseSessionAttributes = {
+			created_at: number;
+		};
+	}
+}
+
+export {};
+```
+
+4. on the `signup` page, where the user has so far not finished signing in to your app set the `create_at` field value to the number 0
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+const session = await auth.createSession({
+	userId: user.userId,
+	attributes: {
+		// set this field to 0 since the new user has so far not verified their email address and hence also not signed in to your app
+		created_at: 0
+	}
+});
+```
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/isValidEmail';
+import { auth } from '$lib/server/lucia';
+import { generateEmailVerificationToken } from '$lib/server/token';
+import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {
+					// set this field to 0 since the new user has so far not verified their email address and hence also not signed in to your app
+					created_at: 0
+				}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// create the token for the user
+			const token = await generateEmailVerificationToken(user.userId);
+			console.log(token);
+
+			// send the user an email message with a verification link
+			const message = await sendVerificationMessage(email, token);
+			console.log(message);
+
+			// for now log the created user
+			console.log(user);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// for now you return the received form values back to the signup page
+		// return { timestamp: new Date(), email, password };
+
+		// instead of returning the form values back to the user
+		// you now redirect the signed up user to the "verify" page
+		throw redirect(302, '/verify');
+	}
+} satisfies Actions;
+```
+
+5. when the user pastes the verification link with a valid token on the `verify` page (or on any other new tab, or in another browser) then you can add the current time as timestamp to the user's session
+
+**src/routes/verify/[token]/+server.ts**
+
+```ts
+const session = await auth.createSession({
+	userId: user.userId,
+	attributes: {
+		// here you can now set the current time, this is the timestamp where the verified user signed in to your app
+		created_at: new Date().getTime()
+	}
+});
+```
+
+**src/routes/verify/[token]/+server.ts**
+
+```ts
+import type { RequestHandler } from './$types';
+import { validateEmailVerificationToken } from '$lib/server/token';
+import { auth } from '$lib/server/lucia';
+
+export const GET: RequestHandler = async ({ params, locals }) => {
+	console.log(params);
+
+	try {
+		// pass the token value that is available on the params object to the validateEmailVerificationToken function
+		// the returned value is a promise, so you need to await the result
+		const foundTokenUser = await validateEmailVerificationToken(params.token);
+		console.log(foundTokenUser);
+
+		// check if a user with that token exists
+		if (foundTokenUser) {
+			// 1. Get the user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser
+			const user = await auth.getUser(foundTokenUser?.user_id);
+			// 2. Update the user attribute
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
+			await auth.updateUserAttributes(user.userId, {
+				email_verified: true // Number(true) if stored as an integer
+			});
+
+			// 3. Invalidate all other possible Sessions of that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions
+			await auth.invalidateAllUserSessions(user.userId);
+
+			// 4. Set a new Session for that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {
+					// here you can now set the current time, this is the timestamp where the verified user signed in to your app
+					created_at: new Date().getTime()
+				}
+			});
+
+			// 5. Set a cookie that holds the new Session for that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
+			locals.auth.setSession(session);
+
+			// you cannot use SvelteKit's redirect function in an API route
+			// use the Response object to redirect the user to the profile page
+			return new Response(null, {
+				status: 302,
+				headers: {
+					Location: '/profile'
+				}
+			});
+		}
+
+		// if the user with that token cannot be found return an error message
+		return new Response('invalid token');
+	} catch (error) {
+		console.log(error);
+		return new Response(JSON.stringify(error));
+	}
+};
+```
+
+6. once the token is verified the user is redirected to the `profile` page, here the `load` function in the `+page.server.ts` file gets the user's data
+
+Note, since the `created_at` field on the `Session` model is stored as `BigInt` in the database you cannot return the value as is from the session.
+
+All data that is returned to a page has to be serialized but a `BigInt` cannot be serialized.
+
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json" target="_blank">MDN reference -> Use BigInt with JSON</a>
+
+Due to this you simply wrap the `session.created_at` value in a `Number` and it works.
+
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number" target="_blank">MDN reference -> Number</a>
+
+```ts
+signedInAt: Number(session.createdAt);
+```
+
+**src/routes/profile/+page.server.ts**
+
+```ts
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+
+	// if there is a session and if the session holds a user with a verified email address
+	if (session && session.user.emailVerified) {
+		// check in the terminal to see what data the session holds
+		console.log(session);
+
+		// return the user data stored on the session
+		return {
+			userId: session.user.userId,
+			email: session.user.email,
+			signedInAt: Number(session.createdAt)
+		};
+	}
+	// if there is a session and the session DOES NOT not hold a user with a verified email address
+	if (session && !session.user.emailVerified) {
+		// redirect the user back to verify page
+		throw redirect(302, '/verify');
+	}
+	// redirect all other cases to the app index page for now
+	throw redirect(302, '/');
+};
+```
+
+7. last not least, change the `profile` page markup to show the exact date and time when the user has signed in to your app
+
+**src/routes/profile/+page.svelte**
+
+```html
+<script lang="ts">
+	import type { PageData } from './$types';
+
+	export let data: PageData;
+</script>
+
+<a href="/">Home</a>
+
+<hr />
+<h1>Profile</h1>
+<hr />
+
+<h2>Account Details</h2>
+
+<pre>{JSON.stringify(data, null, 2)}</pre>
+
+<p>Signed In At : {new Date(data.signedInAt)}</p>
+```
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+On the `verify` page paste in the verification link.
+
+If the verification link is correct you are redirected to the `profile` page.
+
+You should have output similar to this in your terminal..
+
+Note, you name have the additional `createdAt` value on your session.
+
+```bash
+{
+  createdAt: 1695136682768n,
+  user: {
+    email: 'conner.white16@ethereal.email',
+    emailVerified: true,
+    userId: '01j5oj1piws4ycx'
+  },
+  sessionId: '6h7j7g88gebknexu643ernyzgb4y22yg18a9riw5',
+  activePeriodExpiresAt: 2023-09-20T15:18:02.768Z,
+  idlePeriodExpiresAt: 2023-10-04T15:18:02.768Z,
+  state: 'active',
+  fresh: false
+}
+```
+
+Your `profile` page should show the personal user data, similar to this..
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/profile_page_created_at_field_user_details.png">

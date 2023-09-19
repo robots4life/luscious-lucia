@@ -20,6 +20,11 @@ export const auth = lucia({
 			// Boolean(data.email_verified) if stored as an integer
 			emailVerified: data.email_verified
 		};
+	},
+	getSessionAttributes: (databaseSession) => {
+		return {
+			createdAt: databaseSession.created_at
+		};
 	}
 });
 

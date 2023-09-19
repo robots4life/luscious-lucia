@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			// 2. Update the user attribute
 			// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
 			await auth.updateUserAttributes(user.userId, {
-				email_verified: true // `Number(true)` if stored as an integer
+				email_verified: true // Number(true) if stored as an integer
 			});
 
 			// 3. Invalidate all other possible Sessions of that user with Lucia
@@ -30,18 +30,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			// https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession
 			const session = await auth.createSession({
 				userId: user.userId,
-				attributes: {}
+				attributes: {
+					// here you can now set the current time, this is the timestamp where the verified user signed in to your app
+					created_at: new Date().getTime()
+				}
 			});
 
 			// 5. Set a cookie that holds the new Session for that user with Lucia
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
 			locals.auth.setSession(session);
-
-			// const body = JSON.stringify(foundTokenUser?.user_id);
-
-			// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
-			// new Response(body, options)
-			// return new Response(body);
 
 			// you cannot use SvelteKit's redirect function in an API route
 			// use the Response object to redirect the user to the profile page
