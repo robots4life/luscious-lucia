@@ -2576,22 +2576,10 @@ You can observe the value of the Session cookie has changed and a new Session wa
 
 If you reload this same tab with the verification link you can observe the Session cookie value keeps changing.
 
-You now have a user with a valid Session, a session cookie set and their email address is verified. However you are now still on the `/verify/[token]` page, the **API Route** and are returning the found user id.
+You now have a user with a valid Session, a session cookie set and their email address is verified.
+
+However you are now still on the `/verify/[token]` page, the **API Route** and are returning the found user id.
 
 Let's start thinking about user flow in your app..
 
 ## 8.0 Handle User Flow
-
-When a new user signs up to your app..
-
-1. Visit Home page
-2. Click Sign up link
-3. Submit Sign up form
-4. Redirect user to Verify page
-5. What happens with this open tab ?
-
-6. Open email message
-7. Click verification link
-8. Open new browser tab with verification link
-9. If the token is valid verify email address
-10. Redirect user to their Profile page
