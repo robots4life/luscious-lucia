@@ -37,11 +37,20 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
 			locals.auth.setSession(session);
 
-			const body = JSON.stringify(foundTokenUser?.user_id);
+			// const body = JSON.stringify(foundTokenUser?.user_id);
 
 			// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
 			// new Response(body, options)
-			return new Response(body);
+			// return new Response(body);
+
+			// you cannot use SvelteKit's redirect function in an API route
+			// use the Response object to redirect the user to the profile page
+			return new Response(null, {
+				status: 302,
+				headers: {
+					Location: '/profile'
+				}
+			});
 		}
 
 		// if the user with that token cannot be found return an error message

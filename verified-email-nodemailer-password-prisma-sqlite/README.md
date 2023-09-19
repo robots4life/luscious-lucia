@@ -2606,6 +2606,8 @@ Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">h
 
 At the moment, once you submit the form on the `signup` page you are leaving the user there.
 
+#### 8.1.1 Redirect the new User to the verify page
+
 Let's redirect the user to the `verify` page after submitting the form on the `signup` page.
 
 This happens in the default form action of the `signup` page, so go to your `+page.server.ts` file of the `signup` page and add the following code.
@@ -2618,8 +2620,10 @@ import { fail, redirect } from '@sveltejs/kit';
 ```
 
 2. Redirect the user **after** the end of the `try catch` block.
-3. Always redirect users **after** the `try catch` block and **never inside** the `try catch` block !!
-4. Use the HTTP status code `302` for this redirection.
+3. In general, redirect users **after** the `try catch` block and **never inside** the `try catch` block !!
+4. Make sure you **do not** `throw` **inside** a `try catch` block !!
+   <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/throw_redirect_try_catch_warning.png">
+5. Use the HTTP status code `302` for this redirection.
    <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes" target="_blank">https://en.wikipedia.org/wiki/List_of_HTTP_status_codes</a>
    <a href="https://en.wikipedia.org/wiki/HTTP_302" target="_blank">https://en.wikipedia.org/wiki/HTTP_302</a>
 
@@ -2700,4 +2704,133 @@ export const actions: Actions = {
 		throw redirect(302, '/verify');
 	}
 } satisfies Actions;
+```
+
+#### 8.1.2 After the verification link is used redirect the new User to their profile page
+
+Now that the user is on the `verify` page you have to wait for the user to paste the verification link in a browser tab.
+
+Note, this can be **another browser altogether** or **a new tab in the browser** the user used to sign up.
+
+So you are sort of facing a dead end on the `verify` page since you cannot make sure that the user pastes the verification link exactly in this tab in the same browser where the this `verify` page is currently open.
+
+You will come back to this scenario later and address is be implementing a form where the user can paste in their `token` received in an email message on the `verify` page itself.
+
+Like this you create an incentive to ..
+
+1. keep the user in the same browser
+2. keep the user on the `verify` page in the same browser tab
+3. have the user paste the `token` on the `verify` page and redirect them to their `profile` page right after that
+
+For now, let's assume the user just pasted the verification link into the same tab where the `verify` page is open.
+
+You previously took care to handle the token logic in these steps..
+
+<a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#72-create-a-token-page" target="_blank">7.2. Create a token page</a>
+
+<a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#73-validate-the-token" target="_blank">7.3. Validate the token</a>
+
+<a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#74-verify-email-and-authenticate-user" target="_blank">7.4. Verify Email and Authenticate User</a>
+
+However you are now still on the `/verify/[token]` page now, the **API Route** and are returning the found user id.
+
+Let's redirect the user to their `profile` page and show them some personal user information.
+
+#### 8.1.3 Create a profile page
+
+Create a `+page.svelte` file in the folder `src/routes/profile`. Export the `data` property on this page to show user specific data on this page.
+
+```html
+<script lang="ts">
+	import type { PageData } from './$types';
+
+	export let data: PageData;
+</script>
+
+<a href="/">Home</a>
+
+<hr />
+<h1>Profile</h1>
+<hr />
+
+<h2>Account Details</h2>
+<p>
+	Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem nisi error voluptatum,
+	nemo unde non minus officia dolorum! Incidunt, ullam!
+</p>
+
+<pre>{JSON.stringify(data, null, 2)}</pre>
+```
+
+#### 8.1.4 Redirect the new User with verified email address and authenticated session to profile page
+
+Remember, you are now still on the /verify/[token] page now, the API Route and are returning the found user id.
+
+Now you are going to redirect the user from this **API Route** to the `profile` page.
+
+**src/routes/verify/[token]/+server.ts**
+
+```ts
+import type { RequestHandler } from './$types';
+import { validateEmailVerificationToken } from '$lib/server/token';
+import { auth } from '$lib/server/lucia';
+
+export const GET: RequestHandler = async ({ params, locals }) => {
+	console.log(params);
+
+	try {
+		// pass the token value that is available on the params object to the validateEmailVerificationToken function
+		// the returned value is a promise, so you need to await the result
+		const foundTokenUser = await validateEmailVerificationToken(params.token);
+		console.log(foundTokenUser);
+
+		// check if a user with that token exists
+		if (foundTokenUser) {
+			// 1. Get the user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser
+			const user = await auth.getUser(foundTokenUser?.user_id);
+			// 2. Update the user attribute
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#updateuserattributes
+			await auth.updateUserAttributes(user.userId, {
+				email_verified: true // `Number(true)` if stored as an integer
+			});
+
+			// 3. Invalidate all other possible Sessions of that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidateallusersessions
+			await auth.invalidateAllUserSessions(user.userId);
+
+			// 4. Set a new Session for that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#createsession
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+
+			// 5. Set a cookie that holds the new Session for that user with Lucia
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
+			locals.auth.setSession(session);
+
+			// const body = JSON.stringify(foundTokenUser?.user_id);
+
+			// https://developer.mozilla.org/en-US/docs/Web/API/Response/Response
+			// new Response(body, options)
+			// return new Response(body);
+
+			// you cannot use SvelteKit's redirect function in an API route
+			// use the Response object to redirect the user to the profile page
+			return new Response(null, {
+				status: 302,
+				headers: {
+					Location: '/profile'
+				}
+			});
+		}
+
+		// if the user with that token cannot be found return an error message
+		return new Response('invalid token');
+	} catch (error) {
+		console.log(error);
+		return new Response(JSON.stringify(error));
+	}
+};
 ```
