@@ -1,5 +1,5 @@
 import type { Actions } from '@sveltejs/kit';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { isValidEmail } from '$lib/server/isValidEmail';
 import { auth } from '$lib/server/lucia';
 import { generateEmailVerificationToken } from '$lib/server/token';
@@ -61,6 +61,10 @@ export const actions: Actions = {
 		}
 
 		// for now you return the received form values back to the signup page
-		return { timestamp: new Date(), email, password };
+		// return { timestamp: new Date(), email, password };
+
+		// instead of returning the form values back to the user
+		// you now redirect the signed up user to the "verify" page
+		throw redirect(302, '/verify');
 	}
 } satisfies Actions;

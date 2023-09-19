@@ -2584,6 +2584,120 @@ Let's start thinking about user flow in your app..
 
 ## 8.0 Handle User Flow
 
+Have a look this simulated user flow, click through the various transitions and think about what this means for your app.
+
 <a href="https://stately.ai/registry/editor/d8c54868-4dbd-4806-a2cd-bc1662671a07?machineId=680e35e2-094b-4757-ad97-79a7922b592f&mode=Simulate" target="_blank">Simulate User Flow</a>
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/user_flow.png">
+
+You are now going to implement the various user flow scenarios.
+
+### 8.1 New User signs up with new email address
+
+1. View App Home Page
+2. User wants to sign up -> View Sign Up Page
+3. User signs up for a new account -> View Verify Email Page
+4. User verifies their email address with the verification link -> View Profile Page
+5. User logs out - > View App Home Page
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+At the moment, once you submit the form on the `signup` page you are leaving the user there.
+
+Let's redirect the user to the `verify` page after submitting the form on the `signup` page.
+
+This happens in the default form action of the `signup` page, so go to your `+page.server.ts` file of the `signup` page and add the following code.
+
+1. Import `redirect` from SvelteKit.
+   <a href="https://kit.svelte.dev/docs/load#redirects" target="_blank">https://kit.svelte.dev/docs/load#redirects</a>
+
+```ts
+import { fail, redirect } from '@sveltejs/kit';
+```
+
+2. Redirect the user **after** the end of the `try catch` block.
+3. Always redirect users **after** the `try catch` block and **never inside** the `try catch` block !!
+4. Use the HTTP status code `302` for this redirection.
+   <a href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes" target="_blank">https://en.wikipedia.org/wiki/List_of_HTTP_status_codes</a>
+   <a href="https://en.wikipedia.org/wiki/HTTP_302" target="_blank">https://en.wikipedia.org/wiki/HTTP_302</a>
+
+```ts
+redirect(302, '/verify');
+```
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/isValidEmail';
+import { auth } from '$lib/server/lucia';
+import { generateEmailVerificationToken } from '$lib/server/token';
+import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// create the token for the user
+			const token = await generateEmailVerificationToken(user.userId);
+			console.log(token);
+
+			// send the user an email message with a verification link
+			const message = await sendVerificationMessage(email, token);
+			console.log(message);
+
+			// for now log the created user
+			console.log(user);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// for now you return the received form values back to the signup page
+		// return { timestamp: new Date(), email, password };
+
+		// instead of returning the form values back to the user
+		// you now redirect the signed up user to the "verify" page
+		throw redirect(302, '/verify');
+	}
+} satisfies Actions;
+```
