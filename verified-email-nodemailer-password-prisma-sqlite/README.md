@@ -2706,13 +2706,19 @@ export const actions: Actions = {
 } satisfies Actions;
 ```
 
-#### 8.1.2 After the verification link is used redirect the new User to their profile page
+#### 8.1.2 Facing a dead end after verification link is sent, breaking the user flow
 
 Now that the user is on the `verify` page you have to wait for the user to paste the verification link in a browser tab.
 
-Note, this can be **another browser altogether** or **a new tab in the browser** the user used to sign up.
+Note, this can be in **another browser altogether** or **a new tab in the current browser** the user used to sign up.
 
-So you are sort of facing a dead end on the `verify` page since you cannot make sure that the user pastes the verification link exactly in this tab in the same browser where the this `verify` page is currently open.
+So you are sort of facing a dead end on the `verify` page since you cannot make sure that the user pastes the verification link exactly in this tab in the same browser where this `verify` page is currently open.
+
+If the user pastes the verification link in another tab while leaving the `verify` page open they will have to reload the `verify` page if they want to continue using your app in that tab.
+
+Otherwise they will continue to use your app from the tab where they pasted in the verification link and just leave the `verify` page open or just close that tab.
+
+This somewhat breaks the user flow..
 
 You will come back to this scenario later and address is be implementing a form where the user can paste in their `token` received in an email message on the `verify` page itself.
 
@@ -2721,6 +2727,8 @@ Like this you create an incentive to ..
 1. keep the user in the same browser
 2. keep the user on the `verify` page in the same browser tab
 3. have the user paste the `token` on the `verify` page and redirect them to their `profile` page right after that
+
+for example GiiHub has you paste in a code in the same tab and browser where you are currently trying to log in..
 
 For now, let's assume the user just pasted the verification link into the same tab where the `verify` page is open.
 
@@ -2760,7 +2768,7 @@ Create a `+page.svelte` file in the folder `src/routes/profile`. Export the `dat
 
 #### 8.1.4 Redirect the new User with verified email address and authenticated session to profile page
 
-Remember, you are now still on the /verify/[token] page now, the API Route and are returning the found user id. The user just pasted the verification link from the email message in this browser tab.
+Remember, you are now still on the `/verify/[token]` page now, the **API Route** and are returning the found user id. The user just pasted the verification link from the email message in this browser tab.
 
 Now you are going to redirect the user from this **API Route** to the `profile` page.
 
@@ -3336,3 +3344,5 @@ Your `profile` page should show the personal user data, similar to this..
    3.1. User verifies their email address with the verification link -> View Profile Page
 4. User logs in with a verified email address -> View Profile Page
 5. User logs out - > View App Home Page
+
+#### 8.2.1
