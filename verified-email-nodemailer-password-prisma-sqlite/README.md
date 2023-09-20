@@ -2728,7 +2728,7 @@ Like this you create an incentive to ..
 2. keep the user on the `verify` page in the same browser tab
 3. have the user paste the `token` on the `verify` page and redirect them to their `profile` page right after that
 
-for example GiiHub has you paste in a code in the same tab and browser where you are currently trying to log in..
+For example GiiHub has you paste in a code in the same tab and browser where you are currently trying to log in..
 
 For now, let's assume the user just pasted the verification link into the same tab where the `verify` page is open.
 
