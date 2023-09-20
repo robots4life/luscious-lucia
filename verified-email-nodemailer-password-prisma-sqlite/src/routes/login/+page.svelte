@@ -1,13 +1,6 @@
-<script lang="ts">
-	// export the form property on this page
-	// to show the return value of the form action on the page
-	import type { ActionData } from './$types';
-	export let form: ActionData;
-</script>
-
 <a href="/">Home</a>
-
 <hr />
+
 <h1>Log In</h1>
 <hr />
 
@@ -19,9 +12,6 @@
 	<input type="password" name="send_password" id="send_password" value="0123456789876543210" />
 	<button form="log_in_with_email" type="submit">Submit</button>
 </form>
-
-<!-- show the return value from the form action -->
-<pre>{JSON.stringify(form, null, 2)}</pre>
 
 <style>
 	form {

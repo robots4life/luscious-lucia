@@ -2072,7 +2072,7 @@ In detail you will need
 1. a route/page `/verify` that new users can be redirected to once they have signed up to your app
 2. a route/page `/token` that will receive the token as part of the URL string / query parameter
 
-### 7.1 Create a verify page
+### 7.1 Create a Verify page
 
 Create a new file `+page.svelte` in the folder `src/routes/verify`.
 
@@ -2085,7 +2085,7 @@ Create a new file `+page.svelte` in the folder `src/routes/verify`.
 
 This is it for now, you will come back to this page later.
 
-### 7.2 Create a token page
+### 7.2 Create a Token API route
 
 This page is not a normal page where the user can see information displayed to them as if they would be browsing other pages of your app.
 
@@ -2606,7 +2606,7 @@ Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">h
 
 At the moment, once you submit the form on the `signup` page you are leaving the user there.
 
-#### 8.1.1 Redirect the new User to the verify page
+#### 8.1.1 Redirect the new User to the Verify page
 
 Let's redirect the user to the `verify` page after submitting the form on the `signup` page.
 
@@ -2744,7 +2744,7 @@ However you are now still on the `/verify/[token]` page now, the **API Route** a
 
 Let's redirect the user to their `profile` page and show them some personal user information.
 
-#### 8.1.3 Create a profile page
+#### 8.1.3 Create a Profile page
 
 Create a `+page.svelte` file in the folder `src/routes/profile`. Export the `data` property on this page to show user specific data on this page.
 
@@ -2756,8 +2756,8 @@ Create a `+page.svelte` file in the folder `src/routes/profile`. Export the `dat
 </script>
 
 <a href="/">Home</a>
-
 <hr />
+
 <h1>Profile</h1>
 <hr />
 
@@ -2766,7 +2766,7 @@ Create a `+page.svelte` file in the folder `src/routes/profile`. Export the `dat
 <pre>{JSON.stringify(data, null, 2)}</pre>
 ```
 
-#### 8.1.4 Redirect the new User with verified email address and authenticated session to profile page
+#### 8.1.4 Redirect the new User with verified email address and authenticated session to Profile page
 
 Remember, you are now still on the `/verify/[token]` page now, the **API Route** and are returning the found user id. The user just pasted the verification link from the email message in this browser tab.
 
@@ -2835,7 +2835,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 };
 ```
 
-#### 8.1.5 Load data for the profile page
+#### 8.1.5 Load data for the Profile page
 
 Note that you just verified this new user's email address, created a new Session for the user and set a session cookie in the browser with this user's session stored in it.
 
@@ -3292,8 +3292,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 </script>
 
 <a href="/">Home</a>
-
 <hr />
+
 <h1>Profile</h1>
 <hr />
 
@@ -3336,44 +3336,37 @@ Your `profile` page should show the personal user data, similar to this..
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/profile_page_created_at_field_user_details.png">
 
-### 8.2 Existing User wants to log in with an unverified or with a verified email address
+#### 8.1.7 Allow the User to Log Out on the Profile page
 
-1. View App Home Page
-2. User wants to log in -> View Log In Page
-3. User logs in with an unverified email address -> View Verify Email Page
-   3.1. User verifies their email address with the verification link -> View Profile Page
-4. User logs in with a verified email address -> View Profile Page
-5. User logs out - > View App Home Page
+Last not least, once the user has signed up, verified their email and is authenticated and redirected to the `profile` page, you can provide a way for the user to log out from your app.
 
-#### 8.2.1 Create a Log In Page
+Add a form that will be handled by a default form action. There is no value that needs to be provided from the user.
 
-Create a new file `+page.svelte` in the folder `src/routes/login`.
+**src/routes/profile/+page.svelte**
 
 ```html
 <script lang="ts">
-	// export the form property on this page
-	// to show the return value of the form action on the page
-	import type { ActionData } from './$types';
-	export let form: ActionData;
+	import type { PageData } from './$types';
+
+	export let data: PageData;
 </script>
 
 <a href="/">Home</a>
-
-<hr />
-<h1>Log In</h1>
 <hr />
 
-<h2>Log In With Email</h2>
-<form id="log_in_with_email" method="POST">
-	<label for="send_email">Email</label>
-	<input type="text" name="send_email" id="send_email" value="conner.white16@ethereal.email" />
-	<label for="send_password">Password</label>
-	<input type="password" name="send_password" id="send_password" value="0123456789876543210" />
-	<button form="log_in_with_email" type="submit">Submit</button>
+<h1>Profile</h1>
+<hr />
+
+<h2>Account Details</h2>
+
+<pre>{JSON.stringify(data, null, 2)}</pre>
+
+<p>Signed In At : {new Date(data.signedInAt)}</p>
+<hr />
+
+<form id="log_out" method="post">
+	<button form="log_out" type="submit">Log Out</button>
 </form>
-
-<!-- show the return value from the form action -->
-<pre>{JSON.stringify(form, null, 2)}</pre>
 
 <style>
 	form {
@@ -3386,3 +3379,239 @@ Create a new file `+page.svelte` in the folder `src/routes/login`.
 	}
 </style>
 ```
+
+#### 8.1.8 Log out the User
+
+Like you did before, handle the form submit with a default form action on the `profile` page.
+
+To log out the user you need to..
+
+1.
+2.
+3.
+
+etc..
+
+**MORELATER**
+
+**src/routes/profile/+page.server.ts**
+
+```ts
+import { fail, redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+
+	// if there is a session and if the session holds a user with a verified email address
+	if (session && session.user.emailVerified) {
+		// check in the terminal to see what data the session holds
+		console.log(session);
+
+		// return the user data stored on the session
+		return {
+			userId: session.user.userId,
+			email: session.user.email,
+			signedInAt: Number(session.createdAt)
+		};
+	}
+	// if there is a session and the session DOES NOT not hold a user with a verified email address
+	if (session && !session.user.emailVerified) {
+		// redirect the user back to verify page
+		throw redirect(302, '/verify');
+	}
+	// redirect all other cases to the app index page for now
+	throw redirect(302, '/');
+};
+
+import type { Actions } from '@sveltejs/kit';
+import { auth } from '$lib/server/lucia';
+
+export const actions: Actions = {
+	default: async ({ locals }) => {
+		const session = await locals.auth.validate();
+
+		// if there is no session then the user is forbidden to access this
+		// https://en.wikipedia.org/wiki/HTTP_403
+		// if (!session) {
+		// 	return fail(401);
+		// }
+
+		// invalidate session
+		// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession
+		await auth.invalidateSession(session.sessionId);
+
+		// remove cookie
+		// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
+		locals.auth.setSession(null);
+
+		// redirect to the app index page for now
+		throw redirect(302, '/');
+	}
+};
+```
+
+### 8.2 Existing User wants to log in with an unverified or with a verified email address
+
+1. View App Home Page
+2. User wants to log in -> View Log In Page
+3. User logs in with an unverified email address -> View Verify Email Page
+   3.1. User verifies their email address with the verification link -> View Profile Page
+4. User logs in with a verified email address -> View Profile Page
+5. User logs out - > View App Home Page
+
+#### 8.2.1 Create a Log In page
+
+Create a new file `+page.svelte` in the folder `src/routes/login`.
+
+```html
+<a href="/">Home</a>
+<hr />
+
+<h1>Log In</h1>
+<hr />
+
+<h2>Log In With Email</h2>
+<form id="log_in_with_email" method="POST">
+	<label for="send_email">Email</label>
+	<input type="text" name="send_email" id="send_email" value="conner.white16@ethereal.email" />
+	<label for="send_password">Password</label>
+	<input type="password" name="send_password" id="send_password" value="0123456789876543210" />
+	<button form="log_in_with_email" type="submit">Submit</button>
+</form>
+
+<style>
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	button {
+		border-radius: 10px;
+	}
+</style>
+```
+
+#### 8.2.2 Link to Log In page from App Home page
+
+Add a link to the `login` page.
+
+**src/routes/+page.svelte**
+
+```html
+<a href="/email">Send Test Email</a>
+<a href="/signup">Sign Up With Email</a>
+<a href="/login">Log In With Email</a>
+<hr />
+
+<h1>Welcome to SvelteKit</h1>
+<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+```
+
+#### 8.2.3 Find User by Key and log them in
+
+Similar to the default form action for the `signup` page you have a default form action for the `login` page in a `+page.server.ts` file.
+
+Now on the `login` page the user supplies an `email` and a `password` value.
+
+It is up to you to find a `user` in your database with those values.
+
+This can be done with a `Key`.
+
+**Keys represent the relationship between a user and a reference to that user.**
+
+<a href="https://lucia-auth.com/basics/keys/" target="_blank">https://lucia-auth.com/basics/keys/</a>
+
+<a href="https://lucia-auth.com/basics/keys/#email--password" target="_blank">https://lucia-auth.com/basics/keys/#email--password</a>
+
+<a href="https://lucia-auth.com/reference/lucia/interfaces/auth/#usekey" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth/#usekey</a>
+
+<a href="https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit/#authenticate-users" target="_blank">https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit/#authenticate-users</a>
+
+```ts
+const keyUser = await auth.useKey('email', email.toLowerCase(), password);
+```
+
+While the user id is the primary way of identifying a user, there are other ways your app may reference a user during the authentication step such as by their `username`, `email`, or GitHub user id.
+
+These identifiers, be it from a user input or an external source, are provided by a provider, identified by a provider id.
+
+The unique id for that user within the provider is the provider user id.
+
+The unique combination of the provider id and provider user id makes up a key.
+
+Create a new file `+page.server.ts` in the folder `src/routes/login`.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/isValidEmail';
+import { auth } from '$lib/server/lucia';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			// find user by key and validate password
+			// https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit/#authenticate-users
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#usekey
+			// https://lucia-auth.com/basics/keys/#email--password
+			const keyUser = await auth.useKey('email', email.toLowerCase(), password);
+
+			const session = await auth.createSession({
+				userId: keyUser.userId,
+				attributes: {
+					// here you can now set the current time, this is the timestamp where the verified user signed in to your app
+					created_at: new Date().getTime()
+				}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// for now log the logged in user
+			console.log(keyUser);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// you now redirect the logged in user to the "profile" page
+		throw redirect(302, '/profile');
+	}
+} satisfies Actions;
+```
+
+1.
+2.
+3.
+
+etc..
+
+**MORELATER**
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+On the `verify` page paste in the verification link.
+
+If the verification link is correct you are redirected to the `profile` page.
