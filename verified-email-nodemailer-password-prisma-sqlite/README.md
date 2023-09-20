@@ -2592,11 +2592,11 @@ Have a look at this simulated user flow, click through the various transitions a
 
 You are now going to implement the various user flow scenarios.
 
-### 8.1 New User signs up with new email address
+### 8.1 New User wants to sign up with a new email address
 
 1. View App Home Page
 2. User wants to sign up -> View Sign Up Page
-3. User signs up for a new account -> View Verify Email Page
+3. User signs up for a new account with a new email address -> View Verify Email Page
 4. User verifies their email address with the verification link -> View Profile Page
 5. User logs out - > View App Home Page
 
@@ -3327,3 +3327,12 @@ Note, you now have the additional `createdAt` value on your session.
 Your `profile` page should show the personal user data, similar to this..
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/profile_page_created_at_field_user_details.png">
+
+### 8.2 Existing User wants to log in with an unverified or with a verified email address
+
+1. View App Home Page
+2. User wants to log in -> View Log In Page
+3. User logs in with an unverified email address -> View Verify Email Page
+   3.1. User verifies their email address with the verification link -> View Profile Page
+4. User logs in with a verified email address -> View Profile Page
+5. User logs out - > View App Home Page
