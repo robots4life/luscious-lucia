@@ -1,5 +1,6 @@
 <a href="/email">Send Test Email</a>
 <a href="/signup">Sign Up With Email</a>
+<a href="/login">Log In With Email</a>
 <hr />
 
 <h1>Welcome to SvelteKit</h1>

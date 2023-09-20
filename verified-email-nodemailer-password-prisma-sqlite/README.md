@@ -3345,4 +3345,6 @@ Your `profile` page should show the personal user data, similar to this..
 4. User logs in with a verified email address -> View Profile Page
 5. User logs out - > View App Home Page
 
-#### 8.2.1
+#### 8.2.1 Create a Log In Page
+
+Create a new file `+page.svelte` in the folder `src/routes/login`.
