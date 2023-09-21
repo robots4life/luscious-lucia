@@ -3695,7 +3695,7 @@ In other words, if you do not redirect at the end of a `try catch` block of a fo
 
 This means that you can, depending on what logic you have running in the form action, take care of different conditions in the `load` function after they happened in the form action.
 
-If you were to **not** redirect a user to the `profile` page at the end of the form action you have all the freedom to decide what you want to to do next with the user.
+If you were to **not** redirect a user to the `profile` page at the end of the form action you have all the freedom to decide what you want to do next with the user.
 
 Let's get rid of the redirect to the `profile` page at the end of the default from action of the profile page.
 
