@@ -3689,13 +3689,13 @@ There is one very important bit of information to understand and use when dealin
 
 **<a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>**
 
-After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.
+_After a form action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes._
 
-In other words, if you do not redirect at the end of `try catch` block of a form action the page's `load` function will run again.
+In other words, if you do not redirect at the end of a `try catch` block of a form action the page's `load` function will run again.
 
 This means that you can, depending on what logic you have running in the form action, take care of different conditions in the `load` function after they happened in the form action.
 
-If you were to **not** redirect a user to the `profile` page at the end of the form action you have all the freedom you want to decided what you want to to do next with the user.
+If you were to **not** redirect a user to the `profile` page at the end of the form action you have all the freedom to decide what you want to to do next with the user.
 
 Let's get rid of the redirect to the `profile` page at the end of the default from action of the profile page.
 
@@ -3853,7 +3853,7 @@ By coupling the login process with the conditional check for the user's verified
 
 This together with implementing login throttling the sending of verification links can be kept to a minimum. More about login throttling later..
 
-To see exactly what is going on and how the user flow is through your app add a few log functions to the `+page.server.ts` files of the `login` page, the `profile` page and the `verify` page.
+To see exactly what is going on and how the user flows through your app add a few log functions to the `+page.server.ts` files of the `login` page, the `profile` page and the `verify` page.
 
 **src/routes/login/+page.server.ts**
 
@@ -3883,6 +3883,137 @@ export const load: PageServerLoad = async ({ locals }) => {
 	console.log('VERIFY page load function logs session : ' + JSON.stringify(session?.user));
 	return {};
 };
+```
+
+Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
+
+Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">http://localhost:5173/signup</a> and submit the form.
+
+On the `verify` page paste in the verification link.
+
+If the verification link is correct you are redirected to the `profile` page.
+
+On the `profile` page now log out the user.
+
+You should be redirected to the app home page.
+
+Now go to the `login` page and submit the form.
+
+You should be redirected to the `profile` page.
+
+Now log out the user, you should be redirected to the app home page.
+
+Clear any browser cache you might have, note, there should be no session cookie stored any more after you have logged out the user.
+
+Now go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and open the `User` table.
+
+In the row `email_verified` double click on the value `true`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_user_select_email_verified_true.png">
+
+Select the value `false` and confirm your choice, click on `Save 1 change`.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/prisma_studio_user_email_verified_false.png">
+
+Now go to the `login` page and submit the form.
+
+You should be redirected to the `verify` page.
+
+You should have output similar to this in your terminal..
+
+```bash
+VERIFY page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":false,"userId":"3qyo1tcl0ve01vi"}
+LOGIN page load function logs session : undefined
+conner.white16@ethereal.email
+0123456789876543210
+token : x47bwxtejbny4nmqwvf6zt0teqqv69fhktd9kz258zy6sdtj2u1mwgwbtv87dmjzugai1un48w0aq6vq2voeb27fwzma1f0vzbnqpmiycb62v0fgjqhd9qtfidhkk1do
+token_expires_in_time : 7200000
+current_time_in_milliseconds : 1695293871817
+token_expires_at_this_time : 1695301071817
+{
+  id: 'x47bwxtejbny4nmqwvf6zt0teqqv69fhktd9kz258zy6sdtj2u1mwgwbtv87dmjzugai1un48w0aq6vq2voeb27fwzma1f0vzbnqpmiycb62v0fgjqhd9qtfidhkk1do',
+  expires: 1695301071817n,
+  user_id: '3qyo1tcl0ve01vi'
+}
+x47bwxtejbny4nmqwvf6zt0teqqv69fhktd9kz258zy6sdtj2u1mwgwbtv87dmjzugai1un48w0aq6vq2voeb27fwzma1f0vzbnqpmiycb62v0fgjqhd9qtfidhkk1do
+Message sent: <7c30e559-d167-4cf6-0275-e9cbe4acae7e@ethereal.email>
+{
+  accepted: [ 'conner.white16@ethereal.email' ],
+  rejected: [],
+  ehlo: [ 'PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH LOGIN PLAIN' ],
+  envelopeTime: 128,
+  messageTime: 136,
+  messageSize: 1342,
+  response: '250 Accepted [STATUS=new MSGID=ZQFaVM2l51sVUMSAZQwhsLf8ObJ5Fxl6AAAAp9-emo5uvc12Yl-mZss-P.4]',
+  envelope: {
+    from: 'conner.white16@ethereal.email',
+    to: [ 'conner.white16@ethereal.email' ]
+  },
+  messageId: '<7c30e559-d167-4cf6-0275-e9cbe4acae7e@ethereal.email>'
+}
+{
+  providerId: 'email',
+  providerUserId: 'conner.white16@ethereal.email',
+  userId: '3qyo1tcl0ve01vi',
+  passwordDefined: true
+}
+LOGIN page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":false,"userId":"3qyo1tcl0ve01vi"}
+VERIFY page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":false,"userId":"3qyo1tcl0ve01vi"}
+```
+
+Go to your Ethereal messages and get the latest verification link you just sent during the default form action of the `login` page.
+
+On the `verify` page paste in the verification link.
+
+If the verification link is correct you are redirected to the `profile` page.
+
+You should have output similar to this in your terminal..
+
+```bash
+{
+  token: 'x47bwxtejbny4nmqwvf6zt0teqqv69fhktd9kz258zy6sdtj2u1mwgwbtv87dmjzugai1un48w0aq6vq2voeb27fwzma1f0vzbnqpmiycb62v0fgjqhd9qtfidhkk1do'
+}
+{
+  id: 'x47bwxtejbny4nmqwvf6zt0teqqv69fhktd9kz258zy6sdtj2u1mwgwbtv87dmjzugai1un48w0aq6vq2voeb27fwzma1f0vzbnqpmiycb62v0fgjqhd9qtfidhkk1do',
+  expires: 1695301071817n,
+  user_id: '3qyo1tcl0ve01vi'
+}
+{
+  id: 'x47bwxtejbny4nmqwvf6zt0teqqv69fhktd9kz258zy6sdtj2u1mwgwbtv87dmjzugai1un48w0aq6vq2voeb27fwzma1f0vzbnqpmiycb62v0fgjqhd9qtfidhkk1do',
+  expires: 1695301071817n,
+  user_id: '3qyo1tcl0ve01vi'
+}
+PROFILE page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":true,"userId":"3qyo1tcl0ve01vi"}
+{
+  createdAt: 1695293979913n,
+  user: {
+    email: 'conner.white16@ethereal.email',
+    emailVerified: true,
+    userId: '3qyo1tcl0ve01vi'
+  },
+  sessionId: '6kseoaa906n2mwohs2rfp2r8z7mu0vj1iwf1c55q',
+  activePeriodExpiresAt: 2023-09-22T10:59:39.913Z,
+  idlePeriodExpiresAt: 2023-10-06T10:59:39.913Z,
+  state: 'active',
+  fresh: false
+}
+```
+
+You can now log out the user to be redirected to the app home page.
+
+Take great care to see how the user flows through your app on the different pages and how the `emailVerified` status changes.
+
+```bash
+1. login
+VERIFY page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":false,"userId":"3qyo1tcl0ve01vi"}
+LOGIN page load function logs session : undefined
+
+2. redirected to verify page
+LOGIN page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":false,"userId":"3qyo1tcl0ve01vi"}
+VERIFY page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":false,"userId":"3qyo1tcl0ve01vi"}
+
+3. pasted in the verification link and redirected to profile page
+PROFILE page load function logs session : {"email":"conner.white16@ethereal.email","emailVerified":true,"userId":"3qyo1tcl0ve01vi"}
 ```
 
 ### 8.4 Existing User wants to sign up in with an email address that is already used for an account
