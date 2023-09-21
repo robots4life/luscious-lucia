@@ -1002,7 +1002,7 @@ try {
 	// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
 	if (e instanceof LuciaError) {
 		// Lucia error
-		console.log(e);
+		return fail(400, String(e));
 	}
 	// throw any other error that is not caught by above conditions
 	throw e;
@@ -1081,33 +1081,35 @@ For checking for all possible errors listed in the Prisma reference read this in
 ```ts
 try {
 	// ...
-} catch (e) {
-	//
-	// Prisma error
-	// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
-	if (e instanceof Prisma.PrismaClientKnownRequestError) {
-		//
-		// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
-		// The .code property can be accessed in a type-safe manner
-		if (e.code === 'P2002') {
-			console.log(`Unique constraint failed on the ${e?.meta?.target}`);
-			console.log('\n');
-			console.log('e : ' + e);
-			console.log('e.meta : ' + e?.meta);
-			console.log('e.meta.target : ' + e?.meta?.target);
+		} catch (e) {
+			//
+			// Prisma error
+			// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+			if (e instanceof Prisma.PrismaClientKnownRequestError) {
+				//
+				// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+				// The .code property can be accessed in a type-safe manner
+				if (e.code === 'P2002') {
+					console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+					console.log('\n');
+					console.log('e : ' + e);
+					console.log('e.meta : ' + e?.meta);
+					console.log('e.meta.target : ' + e?.meta?.target);
 
-			// return the error to the page with SvelteKit's fail function
-			// https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors
-			return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
+					// return the error to the page with SvelteKit's fail function
+					// https://kit.svelte.dev/docs/form-actions#anatomy-of-an-action-validation-errors
+					return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
+				}
+			}
+			// Lucia error
+			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+			if (e instanceof LuciaError) {
+				// Lucia error
+				return fail(400, String(e));
+			}
+			// throw any other error that is not caught by above conditions
+			throw e;
 		}
-	}
-	// Lucia error
-	// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
-	if (e instanceof LuciaError) {
-		// Lucia error
-		console.log(e);
-		return fail(500, { message: e });
-	}
 	// throw a SvelteKit redirect if none of the error conditions apply
 	// https://kit.svelte.dev/docs/load#redirects
 	// make sure you don't throw inside a try/catch block!
@@ -1230,9 +1232,10 @@ export const actions = {
 			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
 			if (e instanceof LuciaError) {
 				// Lucia error
-				console.log(e);
-				return fail(500, { message: e });
+				return fail(400, String(e));
 			}
+			// throw any other error that is not caught by above conditions
+			throw e;
 		}
 		// throw a SvelteKit redirect if none of the error conditions apply
 		// https://kit.svelte.dev/docs/load#redirects

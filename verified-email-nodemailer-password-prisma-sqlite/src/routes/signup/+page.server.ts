@@ -77,17 +77,17 @@ export const actions: Actions = {
 					console.log('e.meta.target : ' + e?.meta?.target);
 
 					// return the error to the page with SvelteKit's fail function
-					return fail(400, { error: `Unique constraint failed on the field ${e?.meta?.target}` });
+					return fail(400, { message: `Unique constraint failed on the field ${e?.meta?.target}` });
 				}
 			}
 			// Lucia error
 			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
 			if (e instanceof LuciaError) {
 				// Lucia error
-				console.log(e);
+				return fail(400, { message: String(e) });
 			}
 			// throw any other error that is not caught by above conditions
-			throw e;
+			return fail(400, { message: String(e) });
 		}
 
 		// for now you return the received form values back to the signup page

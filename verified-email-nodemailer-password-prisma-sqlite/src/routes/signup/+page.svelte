@@ -22,7 +22,7 @@
 </form>
 
 <!-- show the return value from the form action -->
-<pre class:error={form?.error}>{JSON.stringify(form, null, 2)}</pre>
+<pre class:error={form?.message}>{JSON.stringify(form, null, 2)}</pre>
 
 <style>
 	form {

@@ -94,9 +94,10 @@ export const actions = {
 			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
 			if (e instanceof LuciaError) {
 				// Lucia error
-				console.log(e);
-				return fail(500, { message: e });
+				return fail(400, { message: String(e) });
 			}
+			// throw any other error that is not caught by above conditions
+			return fail(400, { message: String(e) });
 		}
 		// throw a SvelteKit redirect if none of the error conditions apply
 		// https://kit.svelte.dev/docs/load#redirects

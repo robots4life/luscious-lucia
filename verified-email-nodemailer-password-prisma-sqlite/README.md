@@ -4033,7 +4033,7 @@ Scenario User Flow
 
 6. User logs out - > View App Home Page
 
-#### 8.4.1 Display warning on Sign Up page if user tries to sign up with an email address that already exists
+#### 8.4.1 Display warning message on Sign Up page if user tries to sign up with an email address that already exists
 
 So far there are no checks in place in your code for this scenario. Let's have a look at the `signup` page and how this can be addressed.
 
@@ -4144,17 +4144,17 @@ try {
 			console.log('e.meta.target : ' + e?.meta?.target);
 
 			// return the error to the page with SvelteKit's fail function
-			return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
+			return fail(400, { message: `Unique constraint failed on the field ${e?.meta?.target}` });
 		}
 	}
 	// Lucia error
 	// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
 	if (e instanceof LuciaError) {
 		// Lucia error
-		console.log(e);
+		return fail(400, { message: String(e) });
 	}
-	// throw error;
-	throw e;
+	// throw any other error that is not caught by above conditions
+	return fail(400, { message: String(e) });
 }
 ```
 
@@ -4240,17 +4240,17 @@ export const actions: Actions = {
 					console.log('e.meta.target : ' + e?.meta?.target);
 
 					// return the error to the page with SvelteKit's fail function
-					return fail(400, { error: `Unique constraint failed on the field ${e?.meta?.target}` });
+					return fail(400, { message: `Unique constraint failed on the field ${e?.meta?.target}` });
 				}
 			}
 			// Lucia error
 			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
 			if (e instanceof LuciaError) {
 				// Lucia error
-				console.log(e);
+				return fail(400, { message: String(e) });
 			}
 			// throw any other error that is not caught by above conditions
-			throw e;
+			return fail(400, { message: String(e) });
 		}
 
 		// for now you return the received form values back to the signup page
@@ -4301,7 +4301,7 @@ Also, since the user can only go back to the home page from the `signup` page, a
 </form>
 
 <!-- show the return value from the form action -->
-<pre class:error="{form?.error}">{JSON.stringify(form, null, 2)}</pre>
+<pre class:error="{form?.message}">{JSON.stringify(form, null, 2)}</pre>
 
 <style>
 	form {
@@ -4325,10 +4325,123 @@ If you try to sign up with an exisiting user you should see the error messages b
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/sign_up_unique_email_error.png">
 
+Since you are just handling errors let's also address the next scenario..
+
 ### 8.5 An anonymous User wants to log in
 
 Scenario User Flow
 
 1. View App Home Page
 2. User wants to log in without having an account -> View Log In Page
-3. User tries to log in without having an account -> View Warning Message
+3. User tries to log in without having an account -> View Warning Message on Log In Page
+
+#### 8.5.1 Display warning message on Log In page if user tries to log in without having an account
+
+Add error handling to the default form action of the `login` page, similar to like you did for the `signup` page.
+
+On the `login` page, where you validate a `Key` you get specific error message from `LuciaError`.
+
+Use these error messages to display a warning to the user when something goes wrong.
+
+<a href="https://lucia-auth.com/basics/keys/#validate-keys" target="_blank">https://lucia-auth.com/basics/keys/#validate-keys</a>
+
+**src/routes/login/+page.server.ts**
+
+```ts
+import { LuciaError } from 'lucia';
+import { Prisma } from '@prisma/client';
+
+// ...
+
+try {
+	// ...
+} catch (e) {
+	//
+	// Prisma error
+	// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+	if (e instanceof Prisma.PrismaClientKnownRequestError) {
+		//
+		// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+		// The .code property can be accessed in a type-safe manner
+		if (e.code === 'P2002') {
+			console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+			console.log('\n');
+			console.log('e : ' + e);
+			console.log('e.meta : ' + e?.meta);
+			console.log('e.meta.target : ' + e?.meta?.target);
+
+			// return the error to the page with SvelteKit's fail function
+			return fail(400, { message: `Unique constraint failed on the field ${e?.meta?.target}` });
+		}
+	}
+	// Lucia error
+	// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+	// https://lucia-auth.com/basics/keys/#validate-keys
+	if (
+		e instanceof LuciaError &&
+		(e.message === 'AUTH_INVALID_KEY_ID' || e.message === 'AUTH_INVALID_PASSWORD')
+	) {
+		// user does not exist or invalid password
+		return fail(400, {
+			message: 'Incorrect email or password'
+		});
+	}
+	// throw any other error that is not caught by above conditions
+	return fail(400, { message: String(e) });
+}
+```
+
+To make the error stand out a bit more you apply a **class directive** <a href="https://learn.svelte.dev/tutorial/classes" target="_blank">https://learn.svelte.dev/tutorial/classes</a> to the element that displays the form values.
+
+If the statement inside the curly brackets evaluates to `true` then the `error` class is applied to the element.
+
+Also, since the user can only go back to the home page from the `login` page, also include a link to the `signup` page at the top.
+
+```html
+<script lang="ts">
+	// export the form property on this page
+	// to show the return value of the form action on the page
+	import type { ActionData } from './$types';
+	export let form: ActionData;
+</script>
+
+<a href="/">Home</a>
+<a href="/signup">Sign Up With Email</a>
+<hr />
+
+<h1>Log In</h1>
+<hr />
+
+<h2>Log In With Email</h2>
+<form id="log_in_with_email" method="POST">
+	<label for="send_email">Email</label>
+	<input type="text" name="send_email" id="send_email" value="conner.white16@ethereal.email" />
+	<label for="send_password">Password</label>
+	<input type="password" name="send_password" id="send_password" value="0123456789876543210" />
+	<button form="log_in_with_email" type="submit">Submit</button>
+</form>
+
+<!-- show the return value from the form action -->
+<pre class:error="{form?.message}">{JSON.stringify(form, null, 2)}</pre>
+
+<style>
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	button {
+		border-radius: 10px;
+	}
+	.error {
+		background-color: darkred;
+		color: lightgoldenrodyellow;
+		border-radius: 10px;
+		border: 4px solid darkslateblue;
+	}
+</style>
+```
+
+Well done, you now have nice error messages for the `signup` and `login` page.
+
+## 9.0
