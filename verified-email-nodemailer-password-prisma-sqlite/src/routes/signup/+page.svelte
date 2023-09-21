@@ -6,6 +6,7 @@
 </script>
 
 <a href="/">Home</a>
+<a href="/login">Log In With Email</a>
 <hr />
 
 <h1>Sign Up</h1>
@@ -21,7 +22,7 @@
 </form>
 
 <!-- show the return value from the form action -->
-<pre>{JSON.stringify(form, null, 2)}</pre>
+<pre class:error={form?.error}>{JSON.stringify(form, null, 2)}</pre>
 
 <style>
 	form {
@@ -31,5 +32,11 @@
 	}
 	button {
 		border-radius: 10px;
+	}
+	.error {
+		background-color: darkred;
+		color: lightgoldenrodyellow;
+		border-radius: 10px;
+		border: 4px solid darkslateblue;
 	}
 </style>

@@ -4001,7 +4001,7 @@ PROFILE page load function logs session : {"email":"conner.white16@ethereal.emai
 
 You can now log out the user to be redirected to the app home page.
 
-Take great care to see how the user flows through your app on the different pages and how the `emailVerified` status changes.
+Take great care to see how the user flows through your app on the different pages and how the `emailVerified` status on the session changes.
 
 ```bash
 1. login
@@ -4034,3 +4034,289 @@ Scenario User Flow
 6. User logs out - > View App Home Page
 
 #### 8.4.1 Display warning on Sign Up page if user tries to sign up with an email address that already exists
+
+So far there are no checks in place in your code for this scenario. Let's have a look at the `signup` page and how this can be addressed.
+
+Looking at your database schema it is clear that each user has to have a `unique` user id and a `unique` email address.
+
+**prisma/schema.prisma**
+
+```prisma
+model User {
+  id             String       @id @unique
+  email          String       @unique
+  email_verified Boolean
+  auth_session   Session[]
+  key            Key[]
+  EmailToken     EmailToken[]
+}
+```
+
+So when the databse receives a value for a new account and already has that `email` in another account it will result in an error.
+
+Log out the current user if you have not done so in the prvious step.
+
+Go to the `signup` page and submit the form values.
+
+You will indeed be redirected to the `verify` page.
+
+More important, you should have output similar to this in your terminal..
+
+```bash
+  VITE v4.4.9  ready in 961 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+conner.white16@ethereal.email
+0123456789876543210
+PrismaClientKnownRequestError:
+Invalid `prisma.user.create()` invocation:
+
+
+Unique constraint failed on the fields: (`email`)
+    at vn.handleRequestError (/luscious-lucia/verified-email-nodemailer-password-prisma-sqlite/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6730)
+    at vn.handleAndLogRequestError (/luscious-lucia/verified-email-nodemailer-password-prisma-sqlite/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:6119)
+    at vn.request (/luscious-lucia/verified-email-nodemailer-password-prisma-sqlite/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:123:5839)
+    at async l (/luscious-lucia/verified-email-nodemailer-password-prisma-sqlite/node_modules/.pnpm/@prisma+client@5.2.0_prisma@5.2.0/node_modules/@prisma/client/runtime/library.js:128:9763) {
+  code: 'P2002',
+  clientVersion: '5.2.0',
+  meta: { target: [ 'email' ] }
+}
+VERIFY page load function logs session : undefined
+```
+
+Prisma returns an error, `Unique constraint failed on the fields: (email)`.
+
+Let's see how you can handle such Prisma but also Lucia errors.
+
+#### 8.4.2 Handle Lucia and Prisma errors
+
+Lucia throws 2 types of errors: `LuciaError` and database errors from the database driver or ORM you’re using.
+
+<a href="https://lucia-auth.com/reference/lucia/modules/main#luciaerror" target="_blank">https://lucia-auth.com/reference/lucia/modules/main#luciaerror</a>
+
+Most database related errors, such as connection failure, duplicate values, and foreign key constraint errors, are thrown as is. These need to be handled as if you were using just the driver/ORM.
+
+Find details about how Prisma does error handling.
+
+<a href="https://www.prisma.io/docs/concepts/components/prisma-client/handling-exceptions-and-errors" target="_blank">https://www.prisma.io/docs/concepts/components/prisma-client/handling-exceptions-and-errors</a>
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference</a>
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes</a>
+
+<a href="https://www.prisma.io/docs/concepts/components/prisma-client/working-with-prismaclient/error-formatting" target="_blank">https://www.prisma.io/docs/concepts/components/prisma-client/working-with-prismaclient/error-formatting</a>
+
+Let's try and log a `PrismaClientKnownRequestError` with Prisma.
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror</a>
+
+<a href="https://www.prisma.io/docs/reference/api-reference/error-reference#p2002" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference#p2002</a>
+
+Make sure you import `LuciaError` as well as `Prisma` to be able to handle these errors.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import { LuciaError } from 'lucia';
+import { Prisma } from '@prisma/client';
+```
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+try {
+	// ...
+} catch (e) {
+	//
+	// Prisma error
+	// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+	if (e instanceof Prisma.PrismaClientKnownRequestError) {
+		//
+		// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+		// The .code property can be accessed in a type-safe manner
+		if (e.code === 'P2002') {
+			console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+			console.log('\n');
+			console.log('e : ' + e);
+			console.log('e.meta : ' + e?.meta);
+			console.log('e.meta.target : ' + e?.meta?.target);
+
+			// return the error to the page with SvelteKit's fail function
+			return fail(400, { error: `Unique constraint failed on the ${e?.meta?.target}` });
+		}
+	}
+	// Lucia error
+	// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+	if (e instanceof LuciaError) {
+		// Lucia error
+		console.log(e);
+	}
+	// throw error;
+	throw e;
+}
+```
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/isValidEmail';
+import { auth } from '$lib/server/lucia';
+import { generateEmailVerificationToken } from '$lib/server/token';
+import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+import { LuciaError } from 'lucia';
+import { Prisma } from '@prisma/client';
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			const user = await auth.createUser({
+				key: {
+					providerId: 'email', // auth method
+					providerUserId: email.toLowerCase(), // unique id when using "email" auth method
+					password // hashed by Lucia
+				},
+				attributes: {
+					email: email.toLowerCase(),
+					email_verified: false // `Number(false)` if stored as an integer
+				}
+			});
+
+			const session = await auth.createSession({
+				userId: user.userId,
+				attributes: {
+					// set this field to 0 since the new user has so far not verified their email address and hence also not signed in to your app
+					created_at: 0
+				}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// create the token for the user
+			const token = await generateEmailVerificationToken(user.userId);
+			console.log(token);
+
+			// send the user an email message with a verification link
+			const message = await sendVerificationMessage(email, token);
+			console.log(message);
+
+			// for now log the created user
+			console.log(user);
+		} catch (e) {
+			//
+			// Prisma error
+			// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+			if (e instanceof Prisma.PrismaClientKnownRequestError) {
+				//
+				// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+				// The .code property can be accessed in a type-safe manner
+				if (e.code === 'P2002') {
+					console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+					console.log('\n');
+					console.log('e : ' + e);
+					console.log('e.meta : ' + e?.meta);
+					console.log('e.meta.target : ' + e?.meta?.target);
+
+					// return the error to the page with SvelteKit's fail function
+					return fail(400, { error: `Unique constraint failed on the field ${e?.meta?.target}` });
+				}
+			}
+			// Lucia error
+			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+			if (e instanceof LuciaError) {
+				// Lucia error
+				console.log(e);
+			}
+			// throw any other error that is not caught by above conditions
+			throw e;
+		}
+
+		// for now you return the received form values back to the signup page
+		// return { timestamp: new Date(), email, password };
+
+		// instead of returning the form values back to the user
+		// you now redirect the signed up user to the "verify" page
+		throw redirect(302, '/verify');
+	}
+} satisfies Actions;
+```
+
+To make the error stand out a bit more you apply a **class directive** <a href="https://learn.svelte.dev/tutorial/classes" target="_blank">https://learn.svelte.dev/tutorial/classes</a> to the element that displays the form values.
+
+If the statement inside the curly brackets evaluates to `true` then the `error` class is applied to the element.
+
+Also, since the user can only go back to the home page from the `signup` page, also include a link to the `login` page at the top.
+
+```html
+<!-- show the return value from the form action -->
+<pre class:error="{form?.error}">{JSON.stringify(form, null, 2)}</pre>
+```
+
+**src/routes/signup/+page.svelte**
+
+```html
+<script lang="ts">
+	// export the form property on this page
+	// to show the return value of the form action on the page
+	import type { ActionData } from './$types';
+	export let form: ActionData;
+</script>
+
+<a href="/">Home</a>
+<a href="/login">Log In With Email</a>
+<hr />
+
+<h1>Sign Up</h1>
+<hr />
+
+<h2>Sign Up With Email</h2>
+<form id="sign_up_with_email" method="POST">
+	<label for="send_email">Email</label>
+	<input type="text" name="send_email" id="send_email" value="conner.white16@ethereal.email" />
+	<label for="send_password">Password</label>
+	<input type="password" name="send_password" id="send_password" value="0123456789876543210" />
+	<button form="sign_up_with_email" type="submit">Submit</button>
+</form>
+
+<!-- show the return value from the form action -->
+<pre class:error="{form?.error}">{JSON.stringify(form, null, 2)}</pre>
+
+<style>
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	button {
+		border-radius: 10px;
+	}
+	.error {
+		background-color: darkred;
+		color: lightgoldenrodyellow;
+		border-radius: 10px;
+		border: 4px solid darkslateblue;
+	}
+</style>
+```

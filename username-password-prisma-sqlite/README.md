@@ -965,6 +965,17 @@ Let's try and log a `PrismaClientKnownRequestError` with Prisma.
 
 <a href="https://www.prisma.io/docs/reference/api-reference/error-reference#p2002" target="_blank">https://www.prisma.io/docs/reference/api-reference/error-reference#p2002</a>
 
+Make sure you import `LuciaError` as well as `Prisma` to be able to handle these errors.
+
+**src/routes/signup/+page.server.ts**
+
+```ts
+import { LuciaError } from 'lucia';
+import { Prisma } from '@prisma/client';
+```
+
+**src/routes/signup/+page.server.ts**
+
 ```ts
 try {
 	// ...
@@ -993,7 +1004,7 @@ try {
 		// Lucia error
 		console.log(e);
 	}
-	// throw error;
+	// throw any other error that is not caught by above conditions
 	throw e;
 }
 ```

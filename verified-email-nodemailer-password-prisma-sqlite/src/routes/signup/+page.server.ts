@@ -4,6 +4,8 @@ import { isValidEmail } from '$lib/server/isValidEmail';
 import { auth } from '$lib/server/lucia';
 import { generateEmailVerificationToken } from '$lib/server/token';
 import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+import { LuciaError } from 'lucia';
+import { Prisma } from '@prisma/client';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -59,8 +61,33 @@ export const actions: Actions = {
 
 			// for now log the created user
 			console.log(user);
-		} catch (error) {
-			console.log(error);
+		} catch (e) {
+			//
+			// Prisma error
+			// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
+			if (e instanceof Prisma.PrismaClientKnownRequestError) {
+				//
+				// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+				// The .code property can be accessed in a type-safe manner
+				if (e.code === 'P2002') {
+					console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+					console.log('\n');
+					console.log('e : ' + e);
+					console.log('e.meta : ' + e?.meta);
+					console.log('e.meta.target : ' + e?.meta?.target);
+
+					// return the error to the page with SvelteKit's fail function
+					return fail(400, { error: `Unique constraint failed on the field ${e?.meta?.target}` });
+				}
+			}
+			// Lucia error
+			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+			if (e instanceof LuciaError) {
+				// Lucia error
+				console.log(e);
+			}
+			// throw any other error that is not caught by above conditions
+			throw e;
 		}
 
 		// for now you return the received form values back to the signup page
