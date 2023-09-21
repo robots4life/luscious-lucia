@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate();
+	console.log('PROFILE page load function logs session : ' + JSON.stringify(session?.user));
 
 	// if there is a session and if the session holds a user with a verified email address
 	if (session && session.user.emailVerified) {
@@ -32,13 +33,13 @@ export const actions: Actions = {
 	default: async ({ locals }) => {
 		const session = await locals.auth.validate();
 
-		if (session) {
-			// if there is no session then the user is forbidden to access this
-			// https://en.wikipedia.org/wiki/HTTP_403
-			if (!session) {
-				return fail(401);
-			}
+		// if there is no session then the user is forbidden to access this
+		// https://en.wikipedia.org/wiki/HTTP_403
+		if (!session) {
+			return fail(401);
+		}
 
+		if (session) {
 			// invalidate session
 			// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession
 			await auth.invalidateSession(session.sessionId);
@@ -51,7 +52,7 @@ export const actions: Actions = {
 			throw redirect(302, '/');
 		}
 
-		// redirect to the app index page for now
+		// redirect all other cases to the app index page for now
 		throw redirect(302, '/');
 	}
 };

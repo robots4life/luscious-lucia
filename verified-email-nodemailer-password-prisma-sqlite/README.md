@@ -2751,7 +2751,6 @@ Create a `+page.svelte` file in the folder `src/routes/profile`. Export the `dat
 ```html
 <script lang="ts">
 	import type { PageData } from './$types';
-
 	export let data: PageData;
 </script>
 
@@ -3287,7 +3286,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 ```html
 <script lang="ts">
 	import type { PageData } from './$types';
-
 	export let data: PageData;
 </script>
 
@@ -3347,7 +3345,6 @@ Add a form that will be handled by a default form action. There is no value that
 ```html
 <script lang="ts">
 	import type { PageData } from './$types';
-
 	export let data: PageData;
 </script>
 
@@ -3364,7 +3361,7 @@ Add a form that will be handled by a default form action. There is no value that
 <p>Signed In At : {new Date(data.signedInAt)}</p>
 <hr />
 
-<form id="log_out" method="post">
+<form id="log_out" method="POST">
 	<button form="log_out" type="submit">Log Out</button>
 </form>
 
@@ -3389,7 +3386,7 @@ To log out the user you need to..
 1. check if there is a session, if there is no session return a `401` error
    <a href="https://en.wikipedia.org/wiki/HTTP_403" target="_blank">https://en.wikipedia.org/wiki/HTTP_403</a>
 
-2. invalidate the user's session
+2. if there is a session invalidate the user's session
    <a href="https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession</a>
 
 3. remove the cookie with the session
@@ -3427,9 +3424,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	throw redirect(302, '/');
 };
 
-import type { Actions } from '@sveltejs/kit';
-import { auth } from '$lib/server/lucia';
-
 export const actions: Actions = {
 	default: async ({ locals }) => {
 		const session = await locals.auth.validate();
@@ -3440,15 +3434,20 @@ export const actions: Actions = {
 			return fail(401);
 		}
 
-		// invalidate session
-		// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession
-		await auth.invalidateSession(session.sessionId);
+		if (session) {
+			// invalidate session
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession
+			await auth.invalidateSession(session.sessionId);
 
-		// remove cookie
-		// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
-		locals.auth.setSession(null);
+			// remove cookie
+			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
+			locals.auth.setSession(null);
 
-		// redirect to the app index page for now
+			// redirect to the app index page for now
+			throw redirect(302, '/');
+		}
+
+		// redirect all other cases to the app index page for now
 		throw redirect(302, '/');
 	}
 };
@@ -3656,3 +3655,224 @@ When you hit the `Log Out` button the session will be removed and are redicted t
 3. User tries to log in with an unverified email address -> View Verify Page
 4. User verifies their email address with the verification link -> View Profile Page
 5. User logs out - > View App Home Page
+
+Remember, in <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#815-load-data-for-the-profile-page" target="_blank">**8.1.5 Load data for the Profile page**</a> you have this code in the `load` function for the `profile` page that redirects the user to the `verify` page if their email address is not verified.
+
+**src/routes/profile/+page.server.ts**
+
+```ts
+// 2. if there is a session and the session DOES NOT not hold a user with a verified email address
+if (session && !session.user.emailVerified) {
+	// redirect the user back to verify page
+	throw redirect(302, '/verify');
+}
+```
+
+Also, so far, at the en d of the default form action of the `login` page you redirect the user to the `profile` page.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+// you now redirect the logged in user to the "profile" page
+throw redirect(302, '/profile');
+```
+
+There is one very important bit of information to understand and use when dealing with form actions.
+
+**<a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>**
+
+After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the form prop. This means that your page's load functions will run after the action completes.
+
+In other words, if you do not redirect at the end of `try catch` block of a form action the page's `load` function will run again.
+
+This means that you can, depending on what logic you have running in the form action, take care of different conditions in the `load` function after they happened in the form action.
+
+If you were to **not** redirect a user to the `profile` page at the end of the form action you have all the freedom you want to decided what you want to to do next with the user.
+
+Let's get rid of the redirect to the `profile` page at the end of the default from action of the profile page.
+
+Simply comment out that line.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+// you now redirect the logged in user to the "profile" page
+// if you do not redirect after the form action the load function of the page will run
+// throw redirect(302, '/profile');
+```
+
+Now since you are not redirecting the user to the `profile` page after they have signed up you use a `load` function to do exactly that. And yes, you can use a `load` function because this `load` function will run **AFTER** the default form action has completed running.
+
+At the top of the file **src/routes/login/+page.server.ts** add a `load` function.
+
+```ts
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('LOGIN page load function logs session : ' + JSON.stringify(session?.user));
+
+	// if there is a session but the user's email address is not verified
+	if (session && !session.user.emailVerified) {
+		// redirect the user to the verify page
+		throw redirect(302, '/verify');
+	}
+	// if there is a session and the user's email address in verified
+	if (session && session?.user.emailVerified) {
+		// redirect the user to the profile page
+		throw redirect(302, '/profile');
+	}
+};
+```
+
+Since we are dealing with a user whose email address is not yet verified in this user flow scenario we can now add the needed logic inside the default form action of the `login` page.
+
+```ts
+// if there is a session but the user's email address is not verified
+if (session && !session.user.emailVerified) {
+	// create the token for the user
+	const token = await generateEmailVerificationToken(session.user.userId);
+	console.log(token);
+
+	// send the user an email message with a verification link
+	const message = await sendVerificationMessage(session.user.email, token);
+	console.log(message);
+}
+```
+
+Everything together your `+page.server.ts` file for the `login` page now has this code.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+import type { Actions } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { isValidEmail } from '$lib/server/isValidEmail';
+import { auth } from '$lib/server/lucia';
+import type { PageServerLoad } from './$types';
+import { generateEmailVerificationToken } from '$lib/server/token';
+import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('LOGIN page load function logs session : ' + JSON.stringify(session?.user));
+
+	// if there is a session but the user's email address is not verified
+	if (session && !session.user.emailVerified) {
+		// redirect the user to the verify page
+		throw redirect(302, '/verify');
+	}
+	// if there is a session and the user's email address in verified
+	if (session && session?.user.emailVerified) {
+		// redirect the user to the profile page
+		throw redirect(302, '/profile');
+	}
+};
+
+export const actions: Actions = {
+	default: async ({ request, locals }) => {
+		const form_data = await request.formData();
+
+		const email = form_data.get('send_email');
+		console.log(email);
+
+		const password = form_data.get('send_password');
+		console.log(password);
+
+		// basic check
+		if (!isValidEmail(email)) {
+			return fail(400, {
+				message: 'Invalid email'
+			});
+		}
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
+			return fail(400, {
+				message: 'Invalid password'
+			});
+		}
+
+		try {
+			// find user by key and validate password
+			// https://lucia-auth.com/guidebook/sign-in-with-username-and-password/sveltekit/#authenticate-users
+			// https://lucia-auth.com/reference/lucia/interfaces/auth/#usekey
+			// https://lucia-auth.com/basics/keys/#email--password
+			const keyUser = await auth.useKey('email', email.toLowerCase(), password);
+
+			const session = await auth.createSession({
+				userId: keyUser.userId,
+				attributes: {
+					// here you can now set the current time, this is the timestamp where the verified user signed in to your app
+					created_at: new Date().getTime()
+				}
+			});
+			locals.auth.setSession(session); // set session cookie
+
+			// if there is a session but the user's email address is not verified
+			if (session && !session.user.emailVerified) {
+				// create the token for the user
+				const token = await generateEmailVerificationToken(session.user.userId);
+				console.log(token);
+
+				// send the user an email message with a verification link
+				const message = await sendVerificationMessage(session.user.email, token);
+				console.log(message);
+			}
+
+			// for now log the logged in user
+			console.log(keyUser);
+		} catch (error) {
+			console.log(error);
+		}
+
+		// you now redirect the logged in user to the "profile" page
+		// if you do not redirect after the form action the load function of the page will run
+		// throw redirect(302, '/profile');
+	}
+} satisfies Actions;
+```
+
+If the user has a verified email address they are being redirected to the `profile` page without a new verification link being sent to them.
+
+**However** if the user's email address is not verified and they log in they will indeed receive a new verification link and be redirected to the `verify` page.
+
+The good thing about this is, that only when the user signs in with a correct `email` and `password` but does not yet have a verified email address will a verification link be re-sent to them.
+
+Another approach would be to have a button on the `verfiy` page that the user could use to have the verification link be resent to them.
+
+<a href="https://lucia-auth.com/guidebook/email-verification-links/sveltekit/#resend-verification-link" target="_blank">https://lucia-auth.com/guidebook/email-verification-links/sveltekit/#resend-verification-link</a>
+
+However with this approach a user could abuse this feature and keep pressing the button "resend verifiaction link" and send an indefinite amount of verification links to an email address that might not be their own.
+
+By coupling the login process with the conditional check for the user's verified email address and only then sending a verification link it is made slightly harder to have an indefinite number of verification links being sent.
+
+This together with implementing login throttling the sending of verification links can be kept to a minimum. More about login throttling later..
+
+To see exactly what is going on and how the user flow is through your app add a few log functions to the `+page.server.ts` files of the `login` page, the `profile` page and the `verify` page.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('LOGIN page load function logs session : ' + JSON.stringify(session?.user));
+	...
+```
+
+**src/routes/profile/+page.server.ts**
+
+```ts
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('PROFILE page load function logs session : ' + JSON.stringify(session?.user));
+	...
+```
+
+**src/routes/verify/+page.server.ts**
+
+```ts
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('VERIFY page load function logs session : ' + JSON.stringify(session?.user));
+	return {};
+};
+```

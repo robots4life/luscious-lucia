@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-
 	export let data: PageData;
 </script>
 
@@ -17,7 +16,7 @@
 <p>Signed In At : {new Date(data.signedInAt)}</p>
 <hr />
 
-<form id="log_out" method="post">
+<form id="log_out" method="POST">
 	<button form="log_out" type="submit">Log Out</button>
 </form>
 

@@ -2,6 +2,25 @@ import type { Actions } from '@sveltejs/kit';
 import { fail, redirect } from '@sveltejs/kit';
 import { isValidEmail } from '$lib/server/isValidEmail';
 import { auth } from '$lib/server/lucia';
+import type { PageServerLoad } from './$types';
+import { generateEmailVerificationToken } from '$lib/server/token';
+import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('LOGIN page load function logs session : ' + JSON.stringify(session?.user));
+
+	// if there is a session but the user's email address is not verified
+	if (session && !session.user.emailVerified) {
+		// redirect the user to the verify page
+		throw redirect(302, '/verify');
+	}
+	// if there is a session and the user's email address in verified
+	if (session && session?.user.emailVerified) {
+		// redirect the user to the profile page
+		throw redirect(302, '/profile');
+	}
+};
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -41,6 +60,17 @@ export const actions: Actions = {
 			});
 			locals.auth.setSession(session); // set session cookie
 
+			// if there is a session but the user's email address is not verified
+			if (session && !session.user.emailVerified) {
+				// create the token for the user
+				const token = await generateEmailVerificationToken(session.user.userId);
+				console.log(token);
+
+				// send the user an email message with a verification link
+				const message = await sendVerificationMessage(session.user.email, token);
+				console.log(message);
+			}
+
 			// for now log the logged in user
 			console.log(keyUser);
 		} catch (error) {
@@ -48,6 +78,7 @@ export const actions: Actions = {
 		}
 
 		// you now redirect the logged in user to the "profile" page
-		throw redirect(302, '/profile');
+		// if you do not redirect after the form action the load function of the page will run
+		// throw redirect(302, '/profile');
 	}
 } satisfies Actions;
