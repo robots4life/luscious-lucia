@@ -6,8 +6,8 @@
 </script>
 
 <a href="/">Home</a>
-
 <hr />
+
 <h1>Sign Up</h1>
 <hr />
 

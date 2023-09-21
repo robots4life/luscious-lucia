@@ -868,8 +868,8 @@ Create a `+page.svelte` file in the folder `src/routes/signup`.
 </script>
 
 <a href="/">Home</a>
-
 <hr />
+
 <h1>Sign Up</h1>
 <hr />
 
@@ -3386,13 +3386,16 @@ Like you did before, handle the form submit with a default form action on the `p
 
 To log out the user you need to..
 
-1.
-2.
-3.
+1. check if there is a session, if there is no session return a `401` error
+   <a href="https://en.wikipedia.org/wiki/HTTP_403" target="_blank">https://en.wikipedia.org/wiki/HTTP_403</a>
 
-etc..
+2. invalidate the user's session
+   <a href="https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession</a>
 
-**MORELATER**
+3. remove the cookie with the session
+   <a href="https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession" target="_blank">https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession</a>
+
+4. redirect the user to the Home page of the app, or any other page that is NOT the profile page
 
 **src/routes/profile/+page.server.ts**
 
@@ -3433,9 +3436,9 @@ export const actions: Actions = {
 
 		// if there is no session then the user is forbidden to access this
 		// https://en.wikipedia.org/wiki/HTTP_403
-		// if (!session) {
-		// 	return fail(401);
-		// }
+		if (!session) {
+			return fail(401);
+		}
 
 		// invalidate session
 		// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession
@@ -3599,14 +3602,6 @@ export const actions: Actions = {
 	}
 } satisfies Actions;
 ```
-
-1.
-2.
-3.
-
-etc..
-
-**MORELATER**
 
 Go to Prisma Studio <a href="http://localhost:5555/" target="_blank">http://localhost:5555/</a> and delete the previously created `User` record like you did in this step <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#451-delete-newly-created-user" target="_blank">**4.5.1 Delete newly created User**</a>.
 
