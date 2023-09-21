@@ -3662,7 +3662,7 @@ Scenario User Flow
 4. User verifies their email address with the verification link -> View Profile Page
 5. User logs out - > View App Home Page
 
-#### 8.3.1 Redirect use after with load function after form action has completed
+#### 8.3.1 Redirect user with load function after form action has completed
 
 Remember, in <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#815-load-data-for-the-profile-page" target="_blank">**8.1.5 Load data for the Profile page**</a> you have this code in the `load` function for the `profile` page that redirects the user to the `verify` page if their email address is not verified.
 
@@ -3676,7 +3676,7 @@ if (session && !session.user.emailVerified) {
 }
 ```
 
-Also, so far, at the en d of the default form action of the `login` page you redirect the user to the `profile` page.
+Also, so far, at the end of the default form action of the `login` page you redirect the user to the `profile` page.
 
 **src/routes/login/+page.server.ts**
 
