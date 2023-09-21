@@ -4022,7 +4022,7 @@ Scenario User Flow
 
 1. View App Home Page
 2. User wants to sign up -> View Sign Up Page
-3. User signs up for a new account with an email address that is already used for an account -> View Warning Message
+3. User signs up for a new account with an email address that is already used for an account -> View Warning Message on Sign Up Page
 4. User wants to log in -> View Log In Page
 
 5.1 User logs in with a verified email address -> View Profile Page
@@ -4320,3 +4320,15 @@ Also, since the user can only go back to the home page from the `signup` page, a
 	}
 </style>
 ```
+
+If you try to sign up with an exisiting user you should see the error messages be displayed on the `signup` page.
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/sign_up_unique_email_error.png">
+
+### 8.5 An anonymous User wants to log in
+
+Scenario User Flow
+
+1. View App Home Page
+2. User wants to log in without having an account -> View Log In Page
+3. User tries to log in without having an account -> View Warning Message
