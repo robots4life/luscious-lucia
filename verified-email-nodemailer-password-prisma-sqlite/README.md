@@ -4024,10 +4024,11 @@ Scenario User Flow
 2. User wants to sign up -> View Sign Up Page
 3. User signs up for a new account with an email address that is already used for an account -> View Warning Message
 4. User wants to log in -> View Log In Page
-   5.1 User logs in with a verified email address -> View Profile Page
-   5.2 User tries to log in with an unverified email address -> View Verify Page
-   5.3 User verifies their email address with the verification link -> View Profile Page
 
-5. User logs out - > View App Home Page
+5.1 User logs in with a verified email address -> View Profile Page
+5.2 User tries to log in with an unverified email address -> View Verify Page
+5.3 User verifies their email address with the verification link -> View Profile Page
+
+6. User logs out - > View App Home Page
 
 #### 8.4.1 Display warning on Sign Up page if user tries to sign up with an email address that already exists
