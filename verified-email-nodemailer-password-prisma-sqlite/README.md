@@ -2594,6 +2594,8 @@ You are now going to implement the various user flow scenarios.
 
 ### 8.1 New User wants to sign up with a new email address
 
+Scenario User Flow
+
 1. View App Home Page
 2. User wants to sign up -> View Sign Up Page
 3. User signs up for a new account with a new email address -> View Verify Email Page
@@ -3455,6 +3457,8 @@ export const actions: Actions = {
 
 ### 8.2 Existing User wants to log in with a verified email address
 
+Scenario User Flow
+
 1. View App Home Page
 2. User wants to log in -> View Log In Page
 3. User logs in with a verified email address -> View Profile Page
@@ -3650,11 +3654,15 @@ When you hit the `Log Out` button the session will be removed and are redicted t
 
 ### 8.3 Existing User wants to log in with an unverified email address
 
+Scenario User Flow
+
 1. View App Home Page
 2. User wants to log in -> View Log In Page
 3. User tries to log in with an unverified email address -> View Verify Page
 4. User verifies their email address with the verification link -> View Profile Page
 5. User logs out - > View App Home Page
+
+#### 8.3.1 Redirect use after with load function after form action has completed
 
 Remember, in <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#815-load-data-for-the-profile-page" target="_blank">**8.1.5 Load data for the Profile page**</a> you have this code in the `load` function for the `profile` page that redirects the user to the `verify` page if their email address is not verified.
 
@@ -3876,3 +3884,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {};
 };
 ```
+
+### 8.4 Existing User wants to sign up in with an email address that is already used for an account
+
+Scenario User Flow
+
+1. View App Home Page
+2. User wants to sign up -> View Sign Up Page
+3. User signs up for a new account with an email address that is already used for an account -> View Warning Message
+4. User wants to log in -> View Log In Page
+   5.1 User logs in with a verified email address -> View Profile Page
+   5.2 User tries to log in with an unverified email address -> View Verify Page
+   5.3 User verifies their email address with the verification link -> View Profile Page
+
+5. User logs out - > View App Home Page
+
+#### 8.4.1 Display warning on Sign Up page if user tries to sign up with an email address that already exists
