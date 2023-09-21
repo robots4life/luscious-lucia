@@ -4026,7 +4026,9 @@ Scenario User Flow
 4. User wants to log in -> View Log In Page
 
 5.1 User logs in with a verified email address -> View Profile Page
+
 5.2 User tries to log in with an unverified email address -> View Verify Page
+
 5.3 User verifies their email address with the verification link -> View Profile Page
 
 6. User logs out - > View App Home Page
