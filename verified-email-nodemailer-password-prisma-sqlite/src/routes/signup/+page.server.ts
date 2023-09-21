@@ -6,6 +6,23 @@ import { generateEmailVerificationToken } from '$lib/server/token';
 import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
 import { LuciaError } from 'lucia';
 import { Prisma } from '@prisma/client';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('SIGNUP page load function logs session : ' + JSON.stringify(session?.user));
+
+	// if there is a session but the user's email address is not verified
+	if (session && !session.user.emailVerified) {
+		// redirect the user to the verify page
+		throw redirect(302, '/verify');
+	}
+	// if there is a session and the user's email address in verified
+	if (session && session?.user.emailVerified) {
+		// redirect the user to the profile page
+		throw redirect(302, '/profile');
+	}
+};
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -95,6 +112,9 @@ export const actions: Actions = {
 
 		// instead of returning the form values back to the user
 		// you now redirect the signed up user to the "verify" page
-		throw redirect(302, '/verify');
+		// throw redirect(302, '/verify');
+
+		// if you do not redirect after the form action the load function of the page will run
+		// throw redirect(302, '/verify');
 	}
 } satisfies Actions;
