@@ -3453,7 +3453,7 @@ export const actions: Actions = {
 };
 ```
 
-### 8.2 Existing User wants to log in with with a verified email address
+### 8.2 Existing User wants to log in with a verified email address
 
 1. View App Home Page
 2. User wants to log in -> View Log In Page
@@ -3648,7 +3648,7 @@ Your `profile` page should show the personal user data and a button to log out t
 
 When you hit the `Log Out` button the session will be removed and are redicted to the app home page.
 
-### 8.3 Existing User wants to log in with with an unverified email address
+### 8.3 Existing User wants to log in with an unverified email address
 
 1. View App Home Page
 2. User wants to log in -> View Log In Page
