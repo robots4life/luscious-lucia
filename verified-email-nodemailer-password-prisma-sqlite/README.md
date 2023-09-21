@@ -3454,14 +3454,12 @@ export const actions: Actions = {
 };
 ```
 
-### 8.2 Existing User wants to log in with an unverified or with a verified email address
+### 8.2 Existing User wants to log in with with a verified email address
 
 1. View App Home Page
 2. User wants to log in -> View Log In Page
-3. User logs in with an unverified email address -> View Verify Email Page
-   3.1. User verifies their email address with the verification link -> View Profile Page
-4. User logs in with a verified email address -> View Profile Page
-5. User logs out - > View App Home Page
+3. User logs in with a verified email address -> View Profile Page
+4. User logs out - > View App Home Page
 
 #### 8.2.1 Create a Log In page
 
@@ -3511,7 +3509,7 @@ Add a link to the `login` page.
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 ```
 
-#### 8.2.3 Find User by Key and log them in
+#### 8.2.3 Find User with verified email address by Key and log them in
 
 Similar to the default form action for the `signup` page you have a default form action for the `login` page in a `+page.server.ts` file.
 
@@ -3610,3 +3608,51 @@ Go to the `signup` page <a href="http://localhost:5173/signup" target="_blank">h
 On the `verify` page paste in the verification link.
 
 If the verification link is correct you are redirected to the `profile` page.
+
+On the `profile` page now log out the user.
+
+You should be redirected to the app home page.
+
+Now go to the `login` page and submit the form.
+
+You should be redirected to the `profile` page.
+
+You should have output similar to this in your terminal..
+
+```bash
+conner.white16@ethereal.email
+0123456789876543210
+{
+  providerId: 'email',
+  providerUserId: 'conner.white16@ethereal.email',
+  userId: '3qyo1tcl0ve01vi',
+  passwordDefined: true
+}
+{
+  createdAt: 1695278311875n,
+  user: {
+    email: 'conner.white16@ethereal.email',
+    emailVerified: true,
+    userId: '3qyo1tcl0ve01vi'
+  },
+  sessionId: 'y6f2v0mcikxlbf47tcxuxc14g22sx6bao1h2buo8',
+  activePeriodExpiresAt: 2023-09-22T06:38:31.875Z,
+  idlePeriodExpiresAt: 2023-10-06T06:38:31.875Z,
+  state: 'active',
+  fresh: false
+}
+```
+
+Your `profile` page should show the personal user data and a button to log out the user, similar to this..
+
+<img src="/verified-email-nodemailer-password-prisma-sqlite/docs/profile_page_user_details_user_log_out_button.png">
+
+When you hit the `Log Out` button the session will be removed and are redicted to the app home page.
+
+### 8.3 Existing User wants to log in with with an unverified email address
+
+1. View App Home Page
+2. User wants to log in -> View Log In Page
+3. User tries to log in with an unverified email address -> View Verify Page
+4. User verifies their email address with the verification link -> View Profile Page
+5. User logs out - > View App Home Page

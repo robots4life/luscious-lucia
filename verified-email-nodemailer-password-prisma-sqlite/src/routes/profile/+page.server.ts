@@ -35,9 +35,9 @@ export const actions: Actions = {
 		if (session) {
 			// if there is no session then the user is forbidden to access this
 			// https://en.wikipedia.org/wiki/HTTP_403
-			// if (!session) {
-			// 	return fail(401);
-			// }
+			if (!session) {
+				return fail(401);
+			}
 
 			// invalidate session
 			// https://lucia-auth.com/reference/lucia/interfaces/auth/#invalidatesession
