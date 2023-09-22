@@ -211,7 +211,7 @@ export const actions: Actions = {
 };
 ```
 
-Add a link to the `email` page to the index page.
+Create a link to the `email` page on the home page of your app.
 
 In **src/routes/+page.svelte** add a link.
 
@@ -911,7 +911,7 @@ Note, I am populating the form input fields with the `email` address I get from 
 <input type="password" name="send_password" id="send_password" value="0123456789876543210" />
 ```
 
-Create a link to the `signup` page on the index page of your app.
+Create a link to the `signup` page on the home page of your app.
 
 **src/routes/+page.svelte**
 
@@ -2874,7 +2874,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		// redirect the user back to verify page
 		throw redirect(302, '/verify');
 	}
-	// 3. redirect all other cases to the app index page for now
+	// 3. redirect all other cases to the app home page for now
 	throw redirect(302, '/');
 };
 ```
@@ -3276,7 +3276,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		// redirect the user back to verify page
 		throw redirect(302, '/verify');
 	}
-	// redirect all other cases to the app index page for now
+	// redirect all other cases to the app home page for now
 	throw redirect(302, '/');
 };
 ```
@@ -3422,7 +3422,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		// redirect the user back to verify page
 		throw redirect(302, '/verify');
 	}
-	// redirect all other cases to the app index page for now
+	// redirect all other cases to the app home page for now
 	throw redirect(302, '/');
 };
 
@@ -3445,11 +3445,11 @@ export const actions: Actions = {
 			// https://lucia-auth.com/reference/lucia/interfaces/authrequest/#setsession
 			locals.auth.setSession(null);
 
-			// redirect to the app index page for now
+			// redirect to the app home page for now
 			throw redirect(302, '/');
 		}
 
-		// redirect all other cases to the app index page for now
+		// redirect all other cases to the app home page for now
 		throw redirect(302, '/');
 	}
 };
@@ -3881,7 +3881,6 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate();
 	console.log('VERIFY page load function logs session : ' + JSON.stringify(session?.user));
-	return {};
 };
 ```
 
@@ -4458,6 +4457,8 @@ Possibly not.
 
 Now while you could handle this with a `load` function for the home page and conditionally show links in the markup for the home page let's first think about what should happen when a logged in user follows these links.
 
+#### 8.6.1 Redirect an authenticated user away from the Sign up and Log In page
+
 When a logged in user goes to the `signup` page ideally they should be redirected to the `profile` page since it makes no sense to sign up for a new user account while being logged in with a current user account.
 
 When a logged in user goes to the `login` page ideally they should be redirected to the `profile` page since it makes no sense to log in an user account while being logged in with a current user account.
@@ -4489,6 +4490,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 ```
 
 Rememeber, if you like to run the `load` function after the default form action for the `signup` page has completed, you simply omit the `redirect` after the `try catch` block.
+
+**<a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>**
+
+_After an action runs, the page will be re-rendered (unless a redirect or an unexpected error occurs), with the action's return value available to the page as the `form` prop. This means that your page's load functions will run after the action completes._
+
+**<a href="https://kit.svelte.dev/docs/load#redirects" target="_blank">https://kit.svelte.dev/docs/load#redirects</a>**
+
+_To redirect users, use the `redirect` helper from `@sveltejs/kit` to specify the location to which they should be redirected alongside a 3xx status code._
 
 ```ts
 // for now you return the received form values back to the signup page
@@ -4629,4 +4638,42 @@ export const actions: Actions = {
 } satisfies Actions;
 ```
 
-This took care of redirecting the user given their session status.
+This took care of redirecting the user given their session and email verified status.
+
+#### 8.6.2 Redirect an authenticated user away from the Verify page
+
+Now for the `verify` page, what about that ?
+
+1. Does it make sense for users to be able to browse to this page unless they are trying to verify their email address ?
+
+Possibly not.
+
+Similar like you did for the `signup` and `login` page, take care of redirecting the user to another page given their session status.
+
+**<a href="https://kit.svelte.dev/docs/load#redirects" target="_blank">https://kit.svelte.dev/docs/load#redirects</a>**
+
+_To redirect users, use the `redirect` helper from `@sveltejs/kit` to specify the location to which they should be redirected alongside a 3xx status code._
+
+Define a `load` function for the `verify` page.
+
+**src/routes/verify/+page.server.ts**
+
+```ts
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('VERIFY page load function logs session : ' + JSON.stringify(session?.user));
+
+	// if there is no session
+	if (!session) {
+		// redirect the user to the home page
+		throw redirect(302, '/');
+	}
+	// if there is a session and the user's email address in verified
+	if (session && session.user.emailVerified) {
+		throw redirect(302, '/profile');
+	}
+};
+```
