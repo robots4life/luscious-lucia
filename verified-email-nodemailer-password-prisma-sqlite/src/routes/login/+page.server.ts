@@ -7,6 +7,7 @@ import { generateEmailVerificationToken } from '$lib/server/token';
 import { sendVerificationMessage } from '$lib/server/message/sendVerificationLink';
 import { LuciaError } from 'lucia';
 import { Prisma } from '@prisma/client';
+import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate();
@@ -67,10 +68,16 @@ export const actions: Actions = {
 				// create the token for the user
 				const token = await generateEmailVerificationToken(session.user.userId);
 				console.log(token);
+				console.log(typeof token);
 
-				// send the user an email message with a verification link
-				const message = await sendVerificationMessage(session.user.email, token);
-				console.log(message);
+				if (typeof token === 'string') {
+					// send the user an email message with a verification link
+					const message = await sendVerificationMessage(session.user.email, token);
+					console.log(message);
+				} else {
+					console.log('token generation failed');
+					throw error(401, 'token generation failed');
+				}
 			}
 
 			// for now log the logged in user
@@ -107,7 +114,11 @@ export const actions: Actions = {
 				});
 			}
 			// throw any other error that is not caught by above conditions
-			return fail(400, { message: String(e) });
+			// return fail(400, { message: String(e) });
+
+			return fail(500, {
+				message: e.message
+			});
 		}
 
 		// you now redirect the logged in user to the "profile" page

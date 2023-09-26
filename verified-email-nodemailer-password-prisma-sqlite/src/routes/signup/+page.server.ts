@@ -72,9 +72,11 @@ export const actions: Actions = {
 			const token = await generateEmailVerificationToken(user.userId);
 			console.log(token);
 
-			// send the user an email message with a verification link
-			const message = await sendVerificationMessage(email, token);
-			console.log(message);
+			if (typeof token === 'string') {
+				// send the user an email message with a verification link
+				const message = await sendVerificationMessage(session.user.email, token);
+				console.log(message);
+			}
 
 			// for now log the created user
 			console.log(user);
