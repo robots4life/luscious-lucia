@@ -2871,7 +2871,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 	// 2. if there is a session and the session DOES NOT not hold a user with a verified email address
 	if (session && !session.user.emailVerified) {
-		// redirect the user back to verify page
+		// redirect the user back to the verify page
 		throw redirect(302, '/verify');
 	}
 	// 3. redirect all other cases to the app home page for now
@@ -4673,7 +4673,116 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 	// if there is a session and the user's email address in verified
 	if (session && session.user.emailVerified) {
+		// redirect the user to the profile page
 		throw redirect(302, '/profile');
+	}
+};
+```
+
+## 9.0 Handle Tokens
+
+Up to this step you are generating a new token...
+
+1. every time a new user signs up and is redirected to the `verify` page
+2. every time a user without verified email address wants to log in and is redirected to the `verify` page
+
+There are several questions that arise from this procedure..
+
+1. What happens to these tokens when they are not used ?
+2. What happpens to these tokens when they **are** used ?
+3. What happens to a single token when it is past its `expires` time ?
+4. What happens to the rest of the tokens for a user when they are past their `expires` time ?
+5. What happens to the rest of the tokens for a user when one token was used but there are more tokens left that are still before their `expires` time ?
+6. How many tokens should be valid for a single user ?
+
+Let's address these scenarios and questions when handling tokens.
+
+### 9.1 Refactor generating a single Token for any single User
+
+In <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#50-generate-email-token" target="_blank">**5.0 Generate Email Token**</a> you are generating a token that has a certain `expires` time that lies in the future from the moment of the creation of the token.
+
+Right now this time period is 2 hours.
+
+**src/lib/server/token.ts**
+
+```ts
+const token_expires_in_time = 1000 * 60 * 60 * 2; // => 7200000 milliseconds
+```
+
+So between the moment of the creation of the token and the point in time when the token `expires` in the future, should you generate a new token for the user ?
+
+Short, should you generate a new token within the 2 hours of the lifetime of the current token ?
+
+My take on tokens is that I consider a token something that should only exist once for any given user, meaning, that any single user should only ever have a single token that is valid for them.
+
+Another real life scenario to consider here is that if you only have the `expires` time for the single token and the user indeed does open the message and either clicks on the verification link or copy and pastes the verification link into a browser the time this process takes could be within the `expires` time of the token.
+
+So there has to be a timeframe, let's say 20 minutes, before the token `expires` time before the token is not useable any more.
+
+1. get the token from this user where the token expires time is greater than the current time plus 20 minutes
+2. if there is no token whose expires time is greater than the current time plus 20 minutes then delete the previous token for the user and create a new token for the user
+3. else there is a token whose expires time is greater than the current time plus 20 minutes return that token
+
+**src/lib/server/token.ts**
+
+```ts
+export const generateEmailVerificationToken = async (userId: string) => {
+	// get the current time (UNIX) in milliseconds
+	const current_time_in_milliseconds = new Date().getTime();
+	console.log('current_time_in_milliseconds : ' + current_time_in_milliseconds);
+
+	// create amount of time before the token expires
+	// const token_expires_in_time = 1000 * 60; // TEST => 60 seconds
+	const token_expires_in_time = 1000 * 60 * 60 * 2; // => 7200000 milliseconds => 2 hours
+	console.log('token_expires_in_time : ' + token_expires_in_time);
+
+	// create amount of time before the token expires time is too short to still use the token
+	// const token_still_useable_time = 1000 * 50; // TEST => 50 seconds
+	const token_still_useable_time = 1000 * 60 * 20; // => 1200000 => 20 minutes
+	console.log('token_still_useable_time : ' + token_still_useable_time);
+
+	// get the token from this user where the token expires time is greater than the current time plus 20 minutes
+	const useableToken = await prisma.emailToken.findMany({
+		where: {
+			user_id: userId,
+			expires: {
+				gt: current_time_in_milliseconds + token_still_useable_time
+			}
+		}
+	});
+
+	// if there is no token whose expires time is greater than the current time plus 20 minutes
+	if (useableToken.length === 0) {
+		// delete previous token for this user
+		await prisma.emailToken.deleteMany({
+			where: {
+				user_id: userId
+			}
+		});
+
+		// create a new token for the user
+		const token = generateRandomString(128, '0123456789abcdefghijklmnopqrstuvwxyz');
+		console.log('token : ' + token);
+
+		// add the new token to the EmailToken Model for the newly created user with the id being user.userId
+		const emailToken = await prisma.emailToken.create({
+			data: {
+				id: token,
+				expires: current_time_in_milliseconds + token_expires_in_time,
+				user_id: userId
+			}
+		});
+		// for now log the created emailToken
+		console.log(emailToken);
+
+		// you are returning a Promise here
+		return token;
+
+		// else there is a token whose expires time is greater than the current time plus 20 minutes
+	} else {
+		// you are returning the token id here as a string
+		console.log('useableToken[0].id : ' + useableToken[0].id);
+		return useableToken[0].id;
 	}
 };
 ```

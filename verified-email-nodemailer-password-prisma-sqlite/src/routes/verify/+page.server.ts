@@ -12,6 +12,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 	// if there is a session and the user's email address in verified
 	if (session && session.user.emailVerified) {
+		// redirect the user to the profile page
 		throw redirect(302, '/profile');
 	}
 };

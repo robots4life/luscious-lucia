@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 	// if there is a session and the session DOES NOT not hold a user with a verified email address
 	if (session && !session.user.emailVerified) {
-		// redirect the user back to verify page
+		// redirect the user back to the verify page
 		throw redirect(302, '/verify');
 	}
 	// redirect all other cases to the app index page for now
