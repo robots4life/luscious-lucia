@@ -114,11 +114,7 @@ export const actions: Actions = {
 				});
 			}
 			// throw any other error that is not caught by above conditions
-			// return fail(400, { message: String(e) });
-
-			return fail(500, {
-				message: e.message
-			});
+			return fail(400, { message: String(e) });
 		}
 
 		// you now redirect the logged in user to the "profile" page
