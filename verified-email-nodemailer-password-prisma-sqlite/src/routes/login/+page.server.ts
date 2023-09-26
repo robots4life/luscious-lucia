@@ -9,21 +9,21 @@ import { LuciaError } from 'lucia';
 import { Prisma } from '@prisma/client';
 import { error } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const session = await locals.auth.validate();
-	console.log('LOGIN page load function logs session : ' + JSON.stringify(session?.user));
+// export const load: PageServerLoad = async ({ locals }) => {
+// 	const session = await locals.auth.validate();
+// 	console.log('LOGIN page load function logs session : ' + JSON.stringify(session?.user));
 
-	// if there is a session but the user's email address is not verified
-	if (session && !session.user.emailVerified) {
-		// redirect the user to the verify page
-		throw redirect(302, '/verify');
-	}
-	// if there is a session and the user's email address in verified
-	if (session && session?.user.emailVerified) {
-		// redirect the user to the profile page
-		throw redirect(302, '/profile');
-	}
-};
+// 	// if there is a session but the user's email address is not verified
+// 	if (session && !session.user.emailVerified) {
+// 		// redirect the user to the verify page
+// 		throw redirect(302, '/verify');
+// 	}
+// 	// if there is a session and the user's email address in verified
+// 	if (session && session?.user.emailVerified) {
+// 		// redirect the user to the profile page
+// 		throw redirect(302, '/profile');
+// 	}
+// };
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -70,14 +70,16 @@ export const actions: Actions = {
 				console.log(token);
 				console.log(typeof token);
 
-				if (typeof token === 'string') {
-					// send the user an email message with a verification link
-					const message = await sendVerificationMessage(session.user.email, token);
-					console.log(message);
-				} else {
-					console.log('token generation failed');
-					throw error(401, 'token generation failed');
-				}
+				throw new Error(String('default form action : token generation failed !'));
+
+				// if (typeof token === 'string') {
+				// 	// send the user an email message with a verification link
+				// 	const message = await sendVerificationMessage(session.user.email, token);
+				// 	console.log(message);
+				// } else {
+				// 	console.log('token generation failed');
+				// 	throw new Error(String('default form action : token generation failed !'));
+				// }
 			}
 
 			// for now log the logged in user
@@ -86,39 +88,41 @@ export const actions: Actions = {
 			//
 			// Prisma error
 			// https://www.prisma.io/docs/reference/api-reference/error-reference#prismaclientknownrequesterror
-			if (e instanceof Prisma.PrismaClientKnownRequestError) {
-				//
-				// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
-				// The .code property can be accessed in a type-safe manner
-				if (e.code === 'P2002') {
-					console.log(`Unique constraint failed on the ${e?.meta?.target}`);
-					console.log('\n');
-					console.log('e : ' + e);
-					console.log('e.meta : ' + e?.meta);
-					console.log('e.meta.target : ' + e?.meta?.target);
+			// if (e instanceof Prisma.PrismaClientKnownRequestError) {
+			// 	//
+			// 	// https://www.prisma.io/docs/reference/api-reference/error-reference#p2002
+			// 	// The .code property can be accessed in a type-safe manner
+			// 	if (e.code === 'P2002') {
+			// 		console.log(`Unique constraint failed on the ${e?.meta?.target}`);
+			// 		console.log('\n');
+			// 		console.log('e : ' + e);
+			// 		console.log('e.meta : ' + e?.meta);
+			// 		console.log('e.meta.target : ' + e?.meta?.target);
 
-					// return the error to the page with SvelteKit's fail function
-					return fail(400, { error: `Unique constraint failed on the field ${e?.meta?.target}` });
-				}
-			}
-			// Lucia error
-			// https://lucia-auth.com/reference/lucia/modules/main#luciaerror
-			// https://lucia-auth.com/basics/keys/#validate-keys
-			if (
-				e instanceof LuciaError &&
-				(e.message === 'AUTH_INVALID_KEY_ID' || e.message === 'AUTH_INVALID_PASSWORD')
-			) {
-				// user does not exist or invalid password
-				return fail(400, {
-					message: 'Incorrect email or password'
-				});
-			}
+			// 		// return the error to the page with SvelteKit's fail function
+			// 		return fail(400, { error: `Unique constraint failed on the field ${e?.meta?.target}` });
+			// 	}
+			// }
+			// // Lucia error
+			// // https://lucia-auth.com/reference/lucia/modules/main#luciaerror
+			// // https://lucia-auth.com/basics/keys/#validate-keys
+			// if (
+			// 	e instanceof LuciaError &&
+			// 	(e.message === 'AUTH_INVALID_KEY_ID' || e.message === 'AUTH_INVALID_PASSWORD')
+			// ) {
+			// 	// user does not exist or invalid password
+			// 	return fail(400, {
+			// 		message: 'Incorrect email or password'
+			// 	});
+			// }
 			// throw any other error that is not caught by above conditions
-			return fail(400, { message: String(e) });
+			// return fail(400, { message: String(e) });
+
+			return fail(500, { message: String(e.message) });
 		}
 
 		// you now redirect the logged in user to the "profile" page
 		// if you do not redirect after the form action the load function of the page will run
-		// throw redirect(302, '/profile');
+		throw redirect(302, '/profile');
 	}
 } satisfies Actions;
