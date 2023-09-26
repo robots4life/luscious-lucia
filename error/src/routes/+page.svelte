@@ -14,7 +14,7 @@
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 
-<form id="default" method="POST" action="">
+<form id="default" method="POST">
 	<label for="default_form">Form Input</label>
 	<input type="number" name="default_form_number" id="default_form" value="987654321" />
 	<button form="default" type="submit">Submit</button>
