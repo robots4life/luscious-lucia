@@ -62,34 +62,6 @@ export const actions: Actions = {
 			});
 			locals.auth.setSession(session); // set session cookie
 
-			// if there is a session but the user's email address is not verified
-			if (session && !session.user.emailVerified) {
-				// create the token for the user
-				const token = await generateEmailVerificationToken(session.user.userId);
-				console.log(token);
-				console.log(typeof token);
-
-				// check if the token is generated and a string
-				// if anything else is returned from generateEmailVerificationToken() this will trigger the error
-				if (typeof token === 'string') {
-					// send the user an email message with a verification link
-					// error checking on the message sending to be done..
-					const message = await sendVerificationMessage(session.user.email, token);
-					console.log(message);
-				} else {
-					console.log('token generation failed');
-
-					// this little line is da shiznit
-					// since you redirect after the form action has run and have conditions in load based on the session cookie
-					// you remove the session cookie if the token generation failed for any reason
-					// like this, and only like this, the error can be returned with SvelteKit's fail function on the login page
-					locals.auth.setSession(null); // remove the session cookie if there is an error with the token
-
-					// throw a normal Error
-					throw new Error(String('default form action : token generation failed !'));
-				}
-			}
-
 			// for now log the logged in user
 			console.log(keyUser);
 		} catch (e) {

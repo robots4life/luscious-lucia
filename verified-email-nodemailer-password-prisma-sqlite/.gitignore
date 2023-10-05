@@ -11,3 +11,4 @@ vite.config.ts.timestamp-*
 prisma/migrations
 dev.db
 dev.db-journal
+test

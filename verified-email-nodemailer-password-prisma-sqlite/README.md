@@ -3847,11 +3847,13 @@ Another approach would be to have a button on the `verfiy` page that the user co
 
 <a href="https://lucia-auth.com/guidebook/email-verification-links/sveltekit/#resend-verification-link" target="_blank">https://lucia-auth.com/guidebook/email-verification-links/sveltekit/#resend-verification-link</a>
 
-However with this approach a user could abuse this feature and keep pressing the button "resend verifiaction link" and send an indefinite amount of verification links to an email address that might not be their own.
+However with this approach a user could abuse this feature and keep pressing the button "resend verification link" and send an indefinite amount of verification links to an email address that might not be their own.
 
 By coupling the login process with the conditional check for the user's verified email address and only then sending a verification link it is made slightly harder to have an indefinite number of verification links being sent.
 
 This together with implementing login throttling the sending of verification links can be kept to a minimum. More about login throttling later..
+
+<a href="https://lucia-auth.com/guidebook/login-throttling/" target="_blank">https://lucia-auth.com/guidebook/login-throttling/</a>
 
 To see exactly what is going on and how the user flows through your app add a few log functions to the `+page.server.ts` files of the `login` page, the `profile` page and the `verify` page.
 
@@ -4338,7 +4340,7 @@ Scenario User Flow
 
 Add error handling to the default form action of the `login` page, similar to like you did for the `signup` page.
 
-On the `login` page, where you validate a `Key` you get specific error message from `LuciaError`.
+On the `login` page, where you validate a `Key` you get a specific error message from `LuciaError`.
 
 Use these error messages to display a warning to the user when something goes wrong.
 
@@ -4489,6 +4491,30 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 ```
 
+To check, this code should already be in the `load` function for your `login` page.
+
+**src/routes/login/+page.server.ts**
+
+```ts
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	console.log('LOGIN page load function logs session : ' + JSON.stringify(session?.user));
+
+	// if there is a session but the user's email address is not verified
+	if (session && !session.user.emailVerified) {
+		// redirect the user to the verify page
+		throw redirect(302, '/verify');
+	}
+	// if there is a session and the user's email address in verified
+	if (session && session?.user.emailVerified) {
+		// redirect the user to the profile page
+		throw redirect(302, '/profile');
+	}
+};
+```
+
 Rememeber, if you like to run the `load` function after the default form action for the `signup` page has completed, you simply omit the `redirect` after the `try catch` block.
 
 **<a href="https://kit.svelte.dev/docs/form-actions#loading-data" target="_blank">https://kit.svelte.dev/docs/form-actions#loading-data</a>**
@@ -4590,9 +4616,12 @@ export const actions: Actions = {
 			const token = await generateEmailVerificationToken(user.userId);
 			console.log(token);
 
-			// send the user an email message with a verification link
-			const message = await sendVerificationMessage(email, token);
-			console.log(message);
+			// make sure the token is of type string
+			if (typeof token === 'string') {
+				// send the user an email message with a verification link
+				const message = await sendVerificationMessage(session.user.email, token);
+				console.log(message);
+			}
 
 			// for now log the created user
 			console.log(user);
@@ -4792,3 +4821,26 @@ export const generateEmailVerificationToken = async (userId: string) => {
 	}
 };
 ```
+
+### 9.2 Refactor validating a single Token for any single User
+
+In <a href="https://github.com/robots4life/luscious-lucia/tree/master/verified-email-nodemailer-password-prisma-sqlite/#73-validate-the-token" target="_blank">**7.3 Validate the token**</a> you are validating the token that was sent to the user via email.
+
+**src/lib/server/token.ts**
+
+```ts
+export const validateEmailVerificationToken = async (token: string) => {
+	const userEmailToken = await prisma.emailToken.findUnique({
+		where: {
+			id: token
+		}
+	});
+	// log the token from that user
+	console.log(userEmailToken);
+
+	// you are returning a Promise here
+	return userEmailToken;
+};
+```
+
+So far you do nothing with the token that has been validated, let's change that.
