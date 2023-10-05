@@ -62,6 +62,20 @@ export const actions: Actions = {
 			});
 			locals.auth.setSession(session); // set session cookie
 
+			// if there is a session but the user's email address is not verified
+			if (session && !session.user.emailVerified) {
+				// create the token for the user
+				const token = await generateEmailVerificationToken(session.user.userId);
+				console.log(token);
+
+				// make sure token is of type string
+				if (typeof token === 'string') {
+					// send the user an email message with a verification link
+					const message = await sendVerificationMessage(session.user.email, token);
+					console.log(message);
+				}
+			}
+
 			// for now log the logged in user
 			console.log(keyUser);
 		} catch (e) {
