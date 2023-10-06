@@ -9,10 +9,14 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		// pass the token value that is available on the params object to the validateEmailVerificationToken function
 		// the returned value is a promise, so you need to await the result
 		const foundTokenUser = await validateEmailVerificationToken(params.token);
+		console.log('foundTokenUser : ');
 		console.log(foundTokenUser);
 
 		// check if a user with that token exists
 		if (foundTokenUser) {
+			console.log('token ok');
+			// return new Response('token ok');
+
 			// 1. Get the user with Lucia
 			// https://lucia-auth.com/reference/lucia/interfaces/auth/#getuser
 			const user = await auth.getUser(foundTokenUser?.user_id);
@@ -50,8 +54,12 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			});
 		}
 
+		// remove the session cookie if there is an error with the token
+		locals.auth.setSession(null);
 		// if the user with that token cannot be found return an error message
-		return new Response('invalid token');
+		return new Response(
+			'token expired - to get a new verification link return to the log in page and try again'
+		);
 	} catch (error) {
 		console.log(error);
 		return new Response(JSON.stringify(error));
