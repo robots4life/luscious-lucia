@@ -21,7 +21,7 @@ clear
 npx --yes npm-check-updates
 
 currentDateTime=$(date +"%Y-%m-%d-%H-%M-%S")
-upgrades_filename="upgrades-$currentDateTime.log"
+upgrades_filename="./upgrades/upgrades-$currentDateTime.log"
 
 npx npm-check-updates -u > $upgrades_filename
 
