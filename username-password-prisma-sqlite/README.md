@@ -53,9 +53,29 @@ alias px="pnpm dlx"
 
 ## 1.0 Getting Started in SvelteKit
 
+Create a new SvelteKit project in a folder of your choice.
+
+Make a new folder, inside that folder open the terminal and run this command.
+
+`npm create svelte@latest`
+
+`ps`
+
+- choose TypeScript
+- choose Skeleton project
+- choose Prettier & ESLint
+
+Once the project is created install the packages.
+
+`npm install`
+
+`pi`
+
 <a href="https://lucia-auth.com/getting-started/sveltekit" target="_blank">https://lucia-auth.com/getting-started/sveltekit</a>
 
 Install Lucia using the package manager of your choice.
+
+`npm install lucia`
 
 `pa lucia`
 

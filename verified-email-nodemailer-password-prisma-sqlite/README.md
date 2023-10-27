@@ -926,7 +926,7 @@ Create a link to the `signup` page on the home page of your app.
 
 ### 4.1 Create a SvelteKit default form action for the Sign Up page
 
-In the next steps you are going to add the code needed to create a new user in the database
+In the next steps you are going to add the code needed to create a new user in the database.
 
 All of this is done server-side in the **src/routes/signup/+page.server.ts** file.
 
@@ -4328,7 +4328,7 @@ Also, since the user can only go back to the home page from the `signup` page, a
 </style>
 ```
 
-If you try to sign up with an exisiting user you should see the error messages be displayed on the `signup` page.
+If you try to sign up with an existing user you should see the error messages be displayed on the `signup` page.
 
 <img src="/verified-email-nodemailer-password-prisma-sqlite/docs/sign_up_unique_email_error.png">
 
